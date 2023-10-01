@@ -289,21 +289,21 @@ async def screenshot(ctx, amount=1):
             tries += 1
             if tries > max_tries:
                 await ctx.send(f"exceeded max number of tries. Nr: {number+1}/{amount}")
-                sleep(sleep_between_images)
+                await asyncio.sleep(sleep_between_images)
                 break
 
             id = rand_screenshot.get_random_id(6)
             url = rand_screenshot.get_image_url(id)
             if url == -1:
-                sleep(sleep_between_tries)
+                await asyncio.sleep(sleep_between_tries)
                 continue
 
             data = rand_screenshot.get_image_data(url)
             if data == -1:
-                sleep(sleep_between_tries)
+                await asyncio.sleep(sleep_between_tries)
                 continue   
             if len(data) == 503:
-                sleep(sleep_between_tries)
+                await asyncio.sleep(sleep_between_tries)
                 continue
             
             msg = f"ID: {id}, image nr.: {number+1}/{amount}, nr tries: {tries}, URL: {url}"
@@ -314,7 +314,7 @@ async def screenshot(ctx, amount=1):
                     file.write(data)
 
                 await ctx.send(msg, file=discord.File("temp/screenshot.png"))
-            sleep(sleep_between_images)
+            await asyncio.sleep(sleep_between_images)
             break
 
 
