@@ -137,7 +137,8 @@ async def on_message(message):
 
 @bot.event
 async def on_presence_update(before, after):
-    print(f"user update: {after}")
+    # print(f"user update: {after}")
+    pass
 
 @bot.event
 async def on_user_update(before, after):
@@ -149,16 +150,18 @@ async def on_member_ban(guild, user):
 
 @bot.event
 async def on_message_edit(before, after):
-    log(f" >> edit '{before.author.name}' message:{before.content} zu {after.content}")
+    # log(f" >> edit '{before.author.name}' message:{before.content} zu {after.content}")
     # await after.reply("edited")
+    pass
 
 @bot.event
 async def on_message_delete(message):
-    log(f" >> deleted message:{message.content}")
+    # log(f" >> deleted message:{message.content}")
+    pass
 
 @bot.event
 async def on_reaction_add(reaction, user):
-    log(f" >> {user.name} added reaction:{reaction.message.content},{reaction.count},{reaction.emoji}")
+    # log(f" >> {user.name} added reaction:{reaction.message.content},{reaction.count},{reaction.emoji}")
 
     if reaction.emoji == "🗑️" and reaction.message.author == bot.user:
         log("deleting message")
@@ -166,13 +169,14 @@ async def on_reaction_add(reaction, user):
 
 @bot.event
 async def on_reaction_remove(reaction, user):
-    log(f" >> reaction removed:{user.name},{reaction.message.content},{reaction.count},{reaction.emoji}")
+    # log(f" >> reaction removed:{user.name},{reaction.message.content},{reaction.count},{reaction.emoji}")
+    pass
 
 @bot.event
 async def on_voice_state_update(member, before, after):
     global voice_channel, voice_client, PLAYING_SOUND
 
-    log(f" >> voice state update:{member.name}")
+    # log(f" >> voice state update:{member.name}")
     if(member == bot.user):
         pass
 
