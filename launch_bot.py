@@ -8,5 +8,5 @@ def log(text):
 
 log("launching bot...")
 
-output = subprocess.run(["python", "bot.py"])
+output = subprocess.run(["python", "bot.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 log(f"{output.stdout}\n{output.stderr}")
