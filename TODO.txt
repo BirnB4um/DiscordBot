@@ -1,0 +1,4 @@
+
+commands:
+	- download_yt: download a youtube video
+	- join/leave/play/... : everything voice channel related

@@ -13,10 +13,13 @@ not_working_links = [ "//st.prntscr.com/2022/09/11/1722/img/0_173a7b_211be8ff.pn
                     "https://i.imgur.com/Uuh3Nj4.jpg", 
                     "https://i.imgur.com/OqQcO7h.jpg"]
 
+def get_random_id(len=6):
+    return "".join(random.choice(abc) for i in range(len))
+
 def get_image_url(id):
-    URL = "https://prnt.sc/" + id
+    url = "https://prnt.sc/" + id
     try:
-        page = requests.get(URL, headers=headers)
+        page = requests.get(url, headers=headers)
     except:
         return -1
     soup = BeautifulSoup(page.content, "html.parser")
@@ -43,29 +46,3 @@ def get_image_data(src_url):
 def save_image(name, image_data):
     with open(name, 'wb') as file:
         file.write(image_data)
-
-def get_random_id(len):
-    return "".join(random.choice(abc) for i in range(len))
-
-
-# if __name__ == "__main__":
-#     id_length = 6
-
-#     id = get_random_id(id_length)
-#     # id = "zbhzfn"
-#     print(f"ID: {id}")
-
-#     image_url = get_image_url(id)
-#     print(f"img URL: {image_url}")
-#     if image_url == -1:
-#         print("image_url no good")
-#         exit()
-
-#     # sleep(2)
-
-#     image_data = get_image_data(image_url)
-#     if image_data == -1:
-#         print("image_data no good")
-#         exit()
-
-#     save_image(f"images/{id}.png", image_data)
