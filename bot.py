@@ -1,7 +1,6 @@
+
+
 import os
-from discord.ext import commands
-import discord
-from discord import FFmpegPCMAudio
 from dotenv import load_dotenv
 from time import sleep
 import time
@@ -15,22 +14,6 @@ import requests
 import json
 import psutil
 
-import module.random_screenshot as rand_screenshot
-import module.youtube_downloader as yt_dl
-import module.GIF_search as GIF_search
-
-
-##### SETUP #####
-
-IS_RUNNING = True
-
-load_dotenv()
-TOKEN = os.getenv('DISCORD_TOKEN')
-intents = discord.Intents.all()
-intents.members = True
-bot = commands.Bot(command_prefix='.', intents=intents)
-
-
 def log(text, print_to_console=False):
     log_msg = datetime.now().strftime("[%d/%m/%Y %H:%M:%S] ") + text
     with open("data/log.txt", "a") as file:
@@ -41,6 +24,29 @@ def log(text, print_to_console=False):
 
 def constrain(x, minX, maxX):
     return max(minX, min(maxX, x))
+
+log("start script")
+
+from discord.ext import commands
+import discord
+from discord import FFmpegPCMAudio
+
+import module.random_screenshot as rand_screenshot
+import module.youtube_downloader as yt_dl
+import module.GIF_search as GIF_search
+
+
+log("imported everything")
+
+##### SETUP #####
+
+IS_RUNNING = True
+
+load_dotenv()
+TOKEN = os.getenv('DISCORD_TOKEN')
+intents = discord.Intents.all()
+intents.members = True
+bot = commands.Bot(command_prefix='.', intents=intents)
 
 #=======================
 
@@ -431,8 +437,7 @@ time.sleep(60)
 
 # run bot
 while(IS_RUNNING):
+    log("starting bot")
     bot.run(TOKEN)
     log("restarting...")
     time.sleep(5)
-
-print("THE END")
