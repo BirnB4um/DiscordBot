@@ -33,65 +33,42 @@ def log(text):
 
 
 SENDING_SCREENSHOTS = False
-SHUTDOWN = False
 
-#=======================
+#=========  Load Files & set data  ==============
+
+
 #word list
-word_list = []
-with open("./data/german.dic", 'r') as file:
-    word_list = file.read().splitlines()
-
-with open("./data/other_words.txt", 'r') as file:
-    w = file.read().splitlines()
-    [word_list.append(i) for i in w]
-
-word_list_lower = [word.lower() for word in word_list]
-
+with open("./data/german.dic", 'rb') as file:
+    all_words = file.read().decode("latin-1")
+word_list = all_words.splitlines()
+word_list_lower = all_words.lower().splitlines()
 log(f"loaded {len(word_list)} words into dictionary")
 
-#=======================
 # schaf-links 
 log("schaf_links werden geladen...")
 SENDING_SCHAFE = False
 schaf_links = []
 with open("data/schaf_links.txt",'r') as file:
     schaf_links = file.readlines()
-
 log(f"loaded {len(schaf_links)} schaf links")
 
-#=======================
 # id lists
 user_id = {"josef":762641864335556608,
         "thimo":618140491879546881,
         "philipp":335489399968104450,
         "tim":791411006513217536,
         "birnbot":955887644578046032}
-        
-text_channel_id = {"allgemein":819099151429271555, "screenshots":955948966380449823,
-           "müll":819118562874490891, "links":819495379128680478, "schule":819107525482774558,
-           "emoji":819130821523800084, "morse":819146403816931361, "schaf":822006051230056478,
-           "zahlen":821648945637490749, "minecraft":893212180130971658, "meme":921413108826796073}
-
-voice_channel_id = {"ks_krasse_loge" : 819132948003029022, "allgemeine_loge" : 834806819133849603,
-                    "8_bit" : 836949502102339645, "minecraft":915583439800000532,
-                    "ecke":834806307563372584, "kurz_weg":914130684111622205,
-                    "wc":937800824099315713, "keller":925172665667420180,
-                    "verbannung":836958553230409808, "verbannung_in_der_verbannung":836959365990449152,
-                    "pornokeller":927717321756270702}
                     
-#=======================
 
 florida_man_data = []
 with open("data/florida_man.json", 'r') as file:
     florida_man_data = json.load(file)
-
 log(f"loaded {len(florida_man_data)} stories about florida men")
 
-#=======================
 
 months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 
-#=======================
+#====================================
 
 voice_channel = 0
 PLAYING_SOUND = False
