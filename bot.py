@@ -1,8 +1,5 @@
-
-
 import os
 from dotenv import load_dotenv
-from time import sleep
 import time
 from datetime import datetime
 import random
@@ -42,7 +39,6 @@ def log(text, print_to_console=False):
 def constrain(x, minX, maxX):
     return max(minX, min(maxX, x))
 
-log("start script")
 
 #=======================
 
