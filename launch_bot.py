@@ -8,7 +8,5 @@ def log(text):
 
 log("launching bot...")
 
-try:
-    subprocess.run(["python", "bot.py"], check=True)
-except subprocess.CalledProcessError as e:
-    log(f"An error occurred while running the script: {e}")
+output = subprocess.run(["python", "bot.py"])
+log(f"{output.stdout}\n{output.stderr}")
