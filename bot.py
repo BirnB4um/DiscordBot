@@ -41,7 +41,7 @@ word_list = []
 with open("./data/german.dic", 'r') as file:
     word_list = file.read().splitlines()
 
-with open("data/other_words.txt", 'r') as file:
+with open("./data/other_words.txt", 'r') as file:
     w = file.read().splitlines()
     [word_list.append(i) for i in w]
 
