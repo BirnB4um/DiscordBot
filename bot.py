@@ -7,6 +7,8 @@ from time import sleep
 import time
 from datetime import datetime
 import random
+import functools
+import typing
 import asyncio
 from bs4 import BeautifulSoup
 import requests
@@ -19,6 +21,8 @@ import module.GIF_search as GIF_search
 
 
 ##### SETUP #####
+
+IS_RUNNING = True
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -189,7 +193,6 @@ async def on_error(event, *args, **kwargs):
 
 
 ##### COMMANDS ######
-
 
 
 @bot.command(name='spruch', help=' - get random spruch (.spruch [amount])')
@@ -417,9 +420,19 @@ async def repeat(ctx, *message):
 async def restart(ctx):
     await bot.close()
 
-   
+@bot.command(name='shutdown', help=' - shutdown the bot')
+async def shutdown(ctx):
+    global IS_RUNNING
+    IS_RUNNING = False
+    await bot.close()
 
+
+time.sleep(60)
 
 # run bot
-bot.run(TOKEN)
+while(IS_RUNNING):
+    bot.run(TOKEN)
+    log("restarting...")
+    time.sleep(5)
+
 print("THE END")
