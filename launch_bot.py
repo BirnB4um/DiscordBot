@@ -7,6 +7,5 @@ def log(text):
         file.write(log_msg+"\n")
 
 log("launching bot...")
-
 output = subprocess.run(["python", "bot.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 log(f"{output.stdout}\n{output.stderr}")

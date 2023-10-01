@@ -19,8 +19,6 @@ import module.GIF_search as GIF_search
 
 ##### SETUP #####
 
-IS_RUNNING = True
-
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 intents = discord.Intents.all()
@@ -418,17 +416,10 @@ async def repeat(ctx, *message):
 async def restart(ctx):
     await bot.close()
 
-@bot.command(name='shutdown', help=' - shutdown the bot')
-async def shutdown(ctx):
-    global IS_RUNNING
-    IS_RUNNING = False
-    await bot.close()
-
 
 
 # run bot
-while(IS_RUNNING):
-    log("starting bot")
-    bot.run(TOKEN)
-    log("restarting...")
-    time.sleep(5)
+log("starting bot")
+bot.run(TOKEN)
+log("restarting...")
+time.sleep(5)
