@@ -5,6 +5,7 @@ from datetime import datetime
 import random
 import asyncio
 from bs4 import BeautifulSoup
+from gpiozero import CPUTemperature
 import requests
 import json
 import psutil
@@ -24,6 +25,10 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 intents = discord.Intents.all()
 intents.members = True
 bot = commands.Bot(command_prefix='.', intents=intents)
+
+voice_channel = None
+voice_client = None
+PLAYING_SOUND = False
 
 
 def log(text, print_to_console=False):
@@ -108,16 +113,15 @@ async def on_ready():
     await user.send("Bot Ready!")
 
 
+@bot.event
 async def on_voice_state_update(member, before, after):
-    global voice_channel
-    if after.channel is not None:
-        voice_channel = after.channel
-    else:
-        voice_channel = 0
+    global voice_channel, voice_client
 
-    if before.channel is not None and after.channel is None:
-        await voice_channel.disconnect()
-        voice_channel = 0
+    if bot.user.id == member.id:
+
+        voice_channel = after.channel
+        voice_client = bot.voice_clients[0]
+
 
 
 
@@ -172,13 +176,6 @@ async def on_reaction_remove(reaction, user):
     # log(f" >> reaction removed:{user.name},{reaction.message.content},{reaction.count},{reaction.emoji}")
     pass
 
-@bot.event
-async def on_voice_state_update(member, before, after):
-    global voice_channel, voice_client, PLAYING_SOUND
-
-    # log(f" >> voice state update:{member.name}")
-    if(member == bot.user):
-        pass
 
 @bot.event
 async def on_error(event, *args, **kwargs):
@@ -189,6 +186,80 @@ async def on_error(event, *args, **kwargs):
 
 
 ##### COMMANDS ######
+
+
+@bot.command(name='join', help=' - join current vc (.join)')
+async def join(ctx):
+
+    auth_voice = ctx.author.voice
+    if auth_voice == None:
+        await ctx.send("you need to join a voicechannel first")
+        return
+
+    if voice_client != None:
+        await voice_client.move_to(auth_voice.channel)
+        return
+
+    await auth_voice.channel.connect()
+   
+    
+@bot.command(name='leave', help=' - leave vc (.leave)')
+async def leave(ctx):
+    global PLAYING_SOUND
+
+    PLAYING_SOUND = False
+    for vc in bot.voice_clients:
+        if vc != None:
+            vc.stop()
+            await vc.disconnect()
+    
+
+@bot.command(name='play', help=f" - play sounds if joined vc first (.play [sound])")
+async def play(ctx, sound=""):
+    global PLAYING_SOUND
+
+    if voice_client != None:
+        if not PLAYING_SOUND:
+            if sound in list(sound_files.keys()):
+                voice_client.play(FFmpegPCMAudio(sound_files[sound]))
+                PLAYING_SOUND = True
+
+                while voice_client.is_playing() or voice_client.is_paused():
+                    await asyncio.sleep(0.5)
+
+                PLAYING_SOUND = False
+            else:
+                await ctx.send(f"sound not in list. try one of these:\n"+ "\n".join(f"-{sound}" for sound in list(sound_files.keys())))
+
+    else:
+        await ctx.send("bot needs to join first (.join)")
+
+    
+@bot.command(name='stop', help=' - stop current sound (.stop)')
+async def stop(ctx):
+    global PLAYING_SOUND
+    PLAYING_SOUND = False
+    
+    if voice_client != None:
+        voice_client.stop()
+    
+
+@bot.command(name='pause', help=' - pause current sound (.pause)')
+async def pause(ctx):
+    global voice_client, PLAYING_SOUND
+
+    if voice_client != None and PLAYING_SOUND:
+        voice_client.pause()
+    
+
+@bot.command(name='resume', help=' - resume current sound (.resume)')
+async def resume(ctx):
+    global voice_channel
+
+    if voice_channel != None and PLAYING_SOUND:
+        voice_channel.resume()
+    
+
 
 
 @bot.command(name='spruch', help=' - get random spruch (.spruch [amount])')
@@ -319,10 +390,13 @@ async def screenshot(ctx, amount=1):
 
 @bot.command(name='server_status', help=' - show server status (.server_status)')
 async def server_status(ctx):
-
+    try:
+        CPU_TEMP = CPUTemperature().temperature
+    except:
+        CPU_TEMP = -1
     CPU = psutil.cpu_percent(interval=0.5)
     RAM = psutil.virtual_memory().percent
-    await ctx.send(f"**CPU**: {CPU}%\n**RAM**: {RAM}%")
+    await ctx.send(f"**CPU**: {CPU}%\n**CPU TEMP**: {CPU_TEMP}\n**RAM**: {RAM}%")
 
 
 
