@@ -202,6 +202,18 @@ async def on_error(event, *args, **kwargs):
 ##### COMMANDS ######
 
 
+@bot.command(name='shutdown', help=' - shuts down server (.shutdown yes)')
+async def shutdown(ctx, confirmation=""):
+    if ctx.author.id == user_id["thimo"]:
+        if confirmation.lower() == "yes":
+            await ctx.send("shutting down...")
+            log("shutting down server...")
+            os.system("sudo shutdown -h 0")
+            return
+        await ctx.send("confirm with '.shutdown yes'")
+
+
+
 @bot.command(name='get_log', help=' - send log files (.get_log)')
 async def get_log(ctx):
     log("sending log files")
