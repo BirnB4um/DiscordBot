@@ -238,9 +238,6 @@ async def leave(ctx):
 async def play(ctx, sound=""):
     global PLAYING_SOUND
 
-    if sound == "":
-        await ctx.send(f"list of audios:\n"+ "\n".join(f"-{sound}" for sound in list(sound_files.keys())))
-
     if voice_client != None:
         if not PLAYING_SOUND:
             if sound in list(sound_files.keys()):
