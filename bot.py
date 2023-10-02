@@ -428,7 +428,7 @@ async def thumbnail(ctx, link=""):
 
 @bot.command(name='screenshot', help=' - get random screenshot (.screenshot [amount])')
 async def screenshot(ctx, amount=1):
-    amount = constrain(amount, 1, 50)
+    amount = constrain(amount, 1, 30)
 
     max_tries = 10
     sleep_between_images = 4
