@@ -119,12 +119,21 @@ async def on_voice_state_update(member, before, after):
 
     if bot.user.id == member.id:
 
+        for vc in bot.voice_clients:
+            vc.stop()
+
+        if before.channel != None:
+            for vc in bot.voice_clients:
+                if vc.channel == before.channel:
+                    if vc.is_connected():
+                        await vc.disconnect()
+
+
         if len(bot.voice_clients) > 1:
             log(f"voice state update with more than 1 voice_clients: {bot.voice_clients}")
             for i in range(1,len(bot.voice_clients)):
                 bot.voice_clients[i].stop()
                 await bot.voice_clients[i].disconnect()
-
 
 
 
@@ -236,11 +245,10 @@ async def leave(ctx):
     if len(bot.voice_clients) == 0:
         await ctx.send("bot needs to join first (.join)")
         return
-    voice_client = bot.voice_clients[0]
-
-    log(f"leave voice channel {voice_client.channel.id}")
-    voice_client.stop()
-    await voice_client.disconnect()
+    
+    for vc in bot.voice_clients:
+        log(f"leave voice channel {vc.channel}")
+        await vc.disconnect()
     
 
 @bot.command(name='play', help=f" - play sounds if joined vc first (.play [sound])")
@@ -280,9 +288,10 @@ async def stop(ctx):
     if len(bot.voice_clients) == 0:
         await ctx.send("bot needs to join first (.join)")
         return
-    voice_client = bot.voice_clients[0]
+    
     log("stop audio")
-    voice_client.stop()
+    for vc in bot.voice_clients:
+        vc.stop()
 
 
 @bot.command(name='pause', help=' - pause current sound (.pause)')
@@ -290,10 +299,11 @@ async def pause(ctx):
     if len(bot.voice_clients) == 0:
         await ctx.send("bot needs to join first (.join)")
         return
-    voice_client = bot.voice_clients[0]
-    if voice_client != None and voice_client.is_playing():
-        log("pausing audio")
-        voice_client.pause()
+    
+    log("pausing audio")
+    for vc in bot.voice_clients:
+        if vc.is_playing():
+            vc.pause()
     
 
 @bot.command(name='resume', help=' - resume current sound (.resume)')
@@ -301,10 +311,11 @@ async def resume(ctx):
     if len(bot.voice_clients) == 0:
         await ctx.send("bot needs to join first (.join)")
         return
-    voice_client = bot.voice_clients[0]
-    if voice_client != None and voice_client.is_paused():
-        log("resuming audio")
-        voice_client.resume()
+    
+    log("resuming audio")
+    for vc in bot.voice_clients:
+        if vc.is_paused():
+            vc.resume()
     
 
 
