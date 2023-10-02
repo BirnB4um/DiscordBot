@@ -201,8 +201,8 @@ async def get_log(ctx):
         await ctx.send("launcher_log:", file=discord.File("data/launcher_log.txt"))
 
 
-@bot.command(name='remove_log', help=' - clear log files (.remove_log)')
-async def remove_log(ctx):
+@bot.command(name='clear_log', help=' - clear log files (.clear_log)')
+async def clear_log(ctx):
     if ctx.author.id == user_id["thimo"]:
         with open("data/log.txt", "w") as file:
             file.write("")
