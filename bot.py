@@ -248,7 +248,7 @@ async def play(ctx, sound=""):
                 PLAYING_SOUND = True
                 try:
                     options = {
-                        'options': '-b:a 16k',  # Lower bit rate and sample rate
+                        'options': '-b:a 4k',
                     }
                     voice_client.play(FFmpegPCMAudio(sound_files[sound], **options))
 
