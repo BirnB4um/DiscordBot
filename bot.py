@@ -40,10 +40,8 @@ def log(text, print_to_console=False):
     if print_to_console:
         print(log_msg)
 
-
 def error(text):
-    err_msg = datetime.now().strftime("[%d/%m/%Y %H:%M:%S] ") + text
-    print(err_msg)
+    print(datetime.now().strftime("[%d/%m/%Y %H:%M:%S] ") + text)
 
 def constrain(x, minX, maxX):
     return max(minX, min(maxX, x))
@@ -264,7 +262,7 @@ async def play(ctx, sound=""):
                     while voice_client.is_playing() or voice_client.is_paused():
                         await asyncio.sleep(0.5)
                 except Exception as e:
-                    error(e)
+                    error(str(e))
 
                 PLAYING_SOUND = False
             else:
