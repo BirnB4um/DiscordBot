@@ -118,7 +118,6 @@ async def on_voice_state_update(member, before, after):
     global voice_channel, voice_client
 
     if bot.user.id == member.id:
-
         voice_channel = after.channel
         voice_client = bot.voice_clients[0]
 
@@ -127,6 +126,8 @@ async def on_voice_state_update(member, before, after):
 
 @bot.event
 async def on_message(message):
+
+    #if someone sends dm
     if not (message.author == bot.user) and not (message.author.id == user_id["thimo"]) and (message.channel.type == discord.ChannelType.private): 
         log_message = datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" {message.author}: {message.content}"
         user = await bot.fetch_user(user_id["thimo"])
@@ -190,17 +191,23 @@ async def on_error(event, *args, **kwargs):
 
 @bot.command(name='get_log', help=' - send log files (.get_log)')
 async def get_log(ctx):
+    log("sending log files")
     await ctx.send("server_log:", file=discord.File("data/log.txt"))
     await ctx.send("launcher_log:", file=discord.File("data/launcher_log.txt"))
 
 
 @bot.command(name='join', help=' - join current vc (.join)')
 async def join(ctx):
+    global PLAYING_SOUND
 
     auth_voice = ctx.author.voice
     if auth_voice == None:
         await ctx.send("you need to join a voicechannel first")
         return
+
+    PLAYING_SOUND = False
+
+    log(f"joining channel {auth_voice.channel.id}")
 
     if voice_client != None:
         await voice_client.move_to(auth_voice.channel)
@@ -216,6 +223,7 @@ async def leave(ctx):
     PLAYING_SOUND = False
     for vc in bot.voice_clients:
         if vc != None:
+            log(f"leave voice channel {vc.channel.id}")
             vc.stop()
             await vc.disconnect()
     
@@ -227,6 +235,7 @@ async def play(ctx, sound=""):
     if voice_client != None:
         if not PLAYING_SOUND:
             if sound in list(sound_files.keys()):
+                log(f"playing audio: {sound_files[sound]}")
                 voice_client.play(FFmpegPCMAudio(sound_files[sound]))
                 PLAYING_SOUND = True
 
@@ -247,6 +256,7 @@ async def stop(ctx):
     PLAYING_SOUND = False
     
     if voice_client != None:
+        log("stop audio")
         voice_client.stop()
     
 
@@ -255,6 +265,7 @@ async def pause(ctx):
     global voice_client, PLAYING_SOUND
 
     if voice_client != None and PLAYING_SOUND:
+        log("pausing audio")
         voice_client.pause()
     
 
@@ -263,6 +274,7 @@ async def resume(ctx):
     global voice_channel
 
     if voice_channel != None and PLAYING_SOUND:
+        log("resuming audio")
         voice_channel.resume()
     
 
@@ -347,6 +359,7 @@ async def thumbnail(ctx, link=""):
 
     soup = BeautifulSoup(page.content, "html.parser")
     thumbnail_image = soup.find("link", {"rel":"image_src"})["href"]
+    log(f"send thumbnail url: {thumbnail_image}")
     await ctx.send(thumbnail_image)
 
 
@@ -449,7 +462,7 @@ async def to(ctx, name="", *message):
         return
 
     name = name.lower()
-    log(f">> send message to {name}: {message}")
+    log(f"send message to {name}: {message}")
     user = await bot.fetch_user(user_id[name])
     await user.send(message)
 
