@@ -2,3 +2,7 @@
 commands:
 	- download_yt: download a youtube video
 	- join/leave/play/... : everything voice channel related
+
+
+- volume when using .play
+- playback speed when using .play

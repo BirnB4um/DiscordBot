@@ -27,9 +27,6 @@ intents = discord.Intents.all()
 intents.members = True
 bot = commands.Bot(command_prefix='.', intents=intents)
 
-voice_channel = None
-voice_client = None
-PLAYING_SOUND = False
 
 
 def log(text, print_to_console=False):
@@ -119,17 +116,14 @@ async def on_ready():
 
 @bot.event
 async def on_voice_state_update(member, before, after):
-    global voice_channel, voice_client, PLAYING_SOUND
 
     if bot.user.id == member.id:
-        if voice_client is not None:
-            if voice_client.is_playing() or voice_client.is_paused():
-                voice_client.stop()
 
-        PLAYING_SOUND = False
-
-        voice_channel = after.channel
-        voice_client = bot.voice_clients[0]
+        if len(bot.voice_clients) > 1:
+            log(f"voice state update with more than 1 voice_clients: {bot.voice_clients}")
+            for i in range(1,len(bot.voice_clients)):
+                bot.voice_clients[i].stop()
+                await bot.voice_clients[i].disconnect()
 
 
 
@@ -193,7 +187,7 @@ async def on_error(event, *args, **kwargs):
     if event == 'on_message':
         log(f'Unhandled message: {args[0]}\n')
     else:
-        log("ERROR: other error occured!")
+        log(f"ERROR: other error occured! {args}")
 
 
 ##### COMMANDS ######
@@ -202,103 +196,115 @@ async def on_error(event, *args, **kwargs):
 @bot.command(name='get_log', help=' - send log files (.get_log)')
 async def get_log(ctx):
     log("sending log files")
-    await ctx.send("server_log:", file=discord.File("data/log.txt"))
-    await ctx.send("launcher_log:", file=discord.File("data/launcher_log.txt"))
+    if ctx.author.id == user_id["thimo"]:
+        await ctx.send("server_log:", file=discord.File("data/log.txt"))
+        await ctx.send("launcher_log:", file=discord.File("data/launcher_log.txt"))
+
+
+@bot.command(name='clear_log', help=' - clear log files (.clear_log)')
+async def clear_log(ctx):
+    if ctx.author.id == user_id["thimo"]:
+        with open("data/log.txt", "w") as file:
+            file.write("")
+        with open("data/launcher_log.txt", "w") as file:
+            file.write("")
+    log("clearing log files")
+        
 
 
 @bot.command(name='join', help=' - join current vc (.join)')
 async def join(ctx):
-    global PLAYING_SOUND
 
     auth_voice = ctx.author.voice
     if auth_voice == None:
         await ctx.send("you need to join a voicechannel first")
         return
 
-    PLAYING_SOUND = False
 
     log(f"joining channel {auth_voice.channel.id}")
-
-    if voice_client != None:
-        await voice_client.move_to(auth_voice.channel)
-        return
+    
+    for vc in bot.voice_clients:
+        vc.stop()
+        await vc.disconnect()
 
     await auth_voice.channel.connect()
    
     
 @bot.command(name='leave', help=' - leave vc (.leave)')
 async def leave(ctx):
-    global PLAYING_SOUND
 
-    PLAYING_SOUND = False
-    log(f"disconnecting from {len(bot.voice_clients)} voice channel...")
-    for vc in bot.voice_clients:
-        if vc != None:
-            log(f"leave voice channel {vc.channel.id}")
-            vc.stop()
-            await vc.disconnect()
-        
-    if voice_client is not None:
-        log(f"leave main voice channel {vc.channel.id}")
-        voice_client.stop()
-        await voice_client.disconnect()
+    if len(bot.voice_clients) == 0:
+        await ctx.send("bot needs to join first (.join)")
+        return
+    voice_client = bot.voice_clients[0]
+
+    log(f"leave voice channel {voice_client.channel.id}")
+    voice_client.stop()
+    await voice_client.disconnect()
     
 
 @bot.command(name='play', help=f" - play sounds if joined vc first (.play [sound])")
 async def play(ctx, sound=""):
-    global PLAYING_SOUND
 
-    if voice_client != None:
-        if not PLAYING_SOUND:
-            if sound in list(sound_files.keys()):
-                log(f"playing audio: {sound_files[sound]}")
-                PLAYING_SOUND = True
-                try:
-                    options = {
-                        'options': '-b:a 4k',
-                    }
-                    voice_client.play(FFmpegPCMAudio(sound_files[sound], **options))
+    if len(bot.voice_clients) == 0:
+        await ctx.send("bot needs to join first (.join)")
+        return
+    voice_client = bot.voice_clients[0]
 
-                    while voice_client.is_playing() or voice_client.is_paused():
-                        await asyncio.sleep(0.5)
-                except Exception as e:
-                    error(str(e))
+    if sound in list(sound_files.keys()):
+        log(f"playing audio: {sound_files[sound]}")
+        
+        try:
+            if voice_client.is_playing() or voice_client.is_paused():
+                voice_client.stop()
 
-                PLAYING_SOUND = False
-            else:
-                await ctx.send(f"sound {sound} not in list. try one of these:\n"+ "\n".join(f"-{sound}" for sound in list(sound_files.keys())))
-                
+            options = {
+                'options': '-b:a 4k',
+            }
+            voice_client.play(FFmpegPCMAudio(sound_files[sound], **options))
+
+            while voice_client.is_playing() or voice_client.is_paused():
+                await asyncio.sleep(0.5)
+
+        except Exception as e:
+            error(str(e))
+        finally:
+            voice_client.stop()
 
     else:
-        await ctx.send("bot needs to join first (.join)")
+        await ctx.send(f"sound {sound} not in list. try one of these:\n"+ "\n".join(f"-{sound}" for sound in list(sound_files.keys())))
 
     
 @bot.command(name='stop', help=' - stop current sound (.stop)')
 async def stop(ctx):
-    global PLAYING_SOUND
-    PLAYING_SOUND = False
-    
-    if voice_client != None:
-        log("stop audio")
-        voice_client.stop()
-    
+    if len(bot.voice_clients) == 0:
+        await ctx.send("bot needs to join first (.join)")
+        return
+    voice_client = bot.voice_clients[0]
+    log("stop audio")
+    voice_client.stop()
+
 
 @bot.command(name='pause', help=' - pause current sound (.pause)')
 async def pause(ctx):
-    global voice_client, PLAYING_SOUND
-
-    if voice_client != None and PLAYING_SOUND:
+    if len(bot.voice_clients) == 0:
+        await ctx.send("bot needs to join first (.join)")
+        return
+    voice_client = bot.voice_clients[0]
+    if voice_client != None and voice_client.is_playing():
         log("pausing audio")
         voice_client.pause()
     
 
 @bot.command(name='resume', help=' - resume current sound (.resume)')
 async def resume(ctx):
-    global voice_channel
-
-    if voice_channel != None and PLAYING_SOUND:
+    if len(bot.voice_clients) == 0:
+        await ctx.send("bot needs to join first (.join)")
+        return
+    voice_client = bot.voice_clients[0]
+    if voice_client != None and voice_client.is_paused():
         log("resuming audio")
-        voice_channel.resume()
+        voice_client.resume()
     
 
 
