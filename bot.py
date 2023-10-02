@@ -115,9 +115,15 @@ async def on_ready():
 
 @bot.event
 async def on_voice_state_update(member, before, after):
-    global voice_channel, voice_client
+    global voice_channel, voice_client, PLAYING_SOUND
 
     if bot.user.id == member.id:
+        if voice_client is not None:
+            if voice_client.is_playing() or voice_client.is_paused():
+                voice_client.stop()
+
+        PLAYING_SOUND = False
+
         voice_channel = after.channel
         voice_client = bot.voice_clients[0]
 
@@ -232,6 +238,9 @@ async def leave(ctx):
 async def play(ctx, sound=""):
     global PLAYING_SOUND
 
+    if sound == "":
+        await ctx.send(f"list of audios:\n"+ "\n".join(f"-{sound}" for sound in list(sound_files.keys())))
+
     if voice_client != None:
         if not PLAYING_SOUND:
             if sound in list(sound_files.keys()):
@@ -244,7 +253,8 @@ async def play(ctx, sound=""):
 
                 PLAYING_SOUND = False
             else:
-                await ctx.send(f"sound not in list. try one of these:\n"+ "\n".join(f"-{sound}" for sound in list(sound_files.keys())))
+                await ctx.send(f"sound {sound} not in list. try one of these:\n"+ "\n".join(f"-{sound}" for sound in list(sound_files.keys())))
+                
 
     else:
         await ctx.send("bot needs to join first (.join)")
