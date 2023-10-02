@@ -247,7 +247,10 @@ async def play(ctx, sound=""):
                 log(f"playing audio: {sound_files[sound]}")
                 PLAYING_SOUND = True
                 try:
-                    voice_client.play(FFmpegPCMAudio(sound_files[sound]))
+                    options = {
+                        'options': '-b:a 16k',  # Lower bit rate and sample rate
+                    }
+                    voice_client.play(FFmpegPCMAudio(sound_files[sound], **options))
 
                     while voice_client.is_playing() or voice_client.is_paused():
                         await asyncio.sleep(0.5)
