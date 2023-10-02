@@ -40,6 +40,11 @@ def log(text, print_to_console=False):
     if print_to_console:
         print(log_msg)
 
+
+def error(text):
+    err_msg = datetime.now().strftime("[%d/%m/%Y %H:%M:%S] ") + text
+    print(err_msg)
+
 def constrain(x, minX, maxX):
     return max(minX, min(maxX, x))
 
@@ -228,11 +233,17 @@ async def leave(ctx):
     global PLAYING_SOUND
 
     PLAYING_SOUND = False
+    log(f"disconnecting from {len(bot.voice_clients)} voice channel...")
     for vc in bot.voice_clients:
         if vc != None:
             log(f"leave voice channel {vc.channel.id}")
             vc.stop()
             await vc.disconnect()
+        
+    if voice_client is not None:
+        log(f"leave main voice channel {vc.channel.id}")
+        voice_client.stop()
+        await voice_client.disconnect()
     
 
 @bot.command(name='play', help=f" - play sounds if joined vc first (.play [sound])")
@@ -252,8 +263,8 @@ async def play(ctx, sound=""):
 
                     while voice_client.is_playing() or voice_client.is_paused():
                         await asyncio.sleep(0.5)
-                except:
-                    pass
+                except Exception as e:
+                    error(e)
 
                 PLAYING_SOUND = False
             else:
