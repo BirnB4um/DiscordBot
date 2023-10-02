@@ -245,11 +245,14 @@ async def play(ctx, sound=""):
         if not PLAYING_SOUND:
             if sound in list(sound_files.keys()):
                 log(f"playing audio: {sound_files[sound]}")
-                voice_client.play(FFmpegPCMAudio(sound_files[sound]))
                 PLAYING_SOUND = True
+                try:
+                    voice_client.play(FFmpegPCMAudio(sound_files[sound]))
 
-                while voice_client.is_playing() or voice_client.is_paused():
-                    await asyncio.sleep(0.5)
+                    while voice_client.is_playing() or voice_client.is_paused():
+                        await asyncio.sleep(0.5)
+                except:
+                    pass
 
                 PLAYING_SOUND = False
             else:
