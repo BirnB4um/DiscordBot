@@ -188,6 +188,12 @@ async def on_error(event, *args, **kwargs):
 ##### COMMANDS ######
 
 
+@bot.command(name='get_log', help=' - send log files (.get_log)')
+async def get_log(ctx):
+    await ctx.send("server_log:", file=discord.File("data/log.txt"))
+    await ctx.send("launcher_log:", file=discord.File("data/launcher_log.txt"))
+
+
 @bot.command(name='join', help=' - join current vc (.join)')
 async def join(ctx):
 
