@@ -9,6 +9,7 @@ from gpiozero import CPUTemperature
 import requests
 import json
 import psutil
+import speedtest
 from discord.ext import commands
 import discord
 from discord import FFmpegPCMAudio
@@ -422,13 +423,24 @@ async def screenshot(ctx, amount=1):
 
 @bot.command(name='server_status', help=' - show server status (.server_status)')
 async def server_status(ctx):
+
+    try:
+        st = speedtest.Speedtest()
+        st.get_best_server()
+
+        DL_SPEED = round(st.download() / 1_000_000, 3)
+        UP_SPEED = round(st.upload() / 1_000_000, 3)
+    except:
+        DL_SPEED = -1
+        UP_SPEED = -1
+
     try:
         CPU_TEMP = CPUTemperature().temperature
     except:
         CPU_TEMP = -1
     CPU = psutil.cpu_percent(interval=0.5)
     RAM = psutil.virtual_memory().percent
-    await ctx.send(f"**CPU**: {CPU}%\n**CPU TEMP**: {CPU_TEMP}\n**RAM**: {RAM}%")
+    await ctx.send(f"**CPU**: {CPU}%\n**CPU TEMP**: {CPU_TEMP}\n**RAM**: {RAM}%\n**Download speed**: {DL_SPEED} Mbps\n**Upload speed**: {UP_SPEED} Mbps")
 
 
 
