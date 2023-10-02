@@ -10,6 +10,7 @@ import requests
 import json
 import psutil
 import speedtest
+import subprocess
 from discord.ext import commands
 import discord
 from discord import FFmpegPCMAudio
@@ -125,9 +126,7 @@ async def on_voice_state_update(member, before, after):
         if before.channel != None:
             for vc in bot.voice_clients:
                 if vc.channel == before.channel:
-                    if vc.is_connected():
-                        await vc.disconnect()
-
+                    await vc.disconnect()
 
         if len(bot.voice_clients) > 1:
             log(f"voice state update with more than 1 voice_clients: {bot.voice_clients}")
@@ -201,6 +200,17 @@ async def on_error(event, *args, **kwargs):
 
 ##### COMMANDS ######
 
+
+@bot.command(name='pull_update', help=' - pulls the latest update from github (.pull_update yes)')
+async def pull_update(ctx, confirmation=""):
+    if ctx.author.id == user_id["thimo"]:
+        if confirmation.lower() == "yes":
+            await ctx.send("pulling update...")
+            log("pulling update...")
+            code = os.system("git pull")
+            await ctx.send(f"update completed! exitcode: {code}")
+            return
+        await ctx.send("confirm with '.pull_update yes'")
 
 @bot.command(name='shutdown', help=' - shuts down server (.shutdown yes)')
 async def shutdown(ctx, confirmation=""):
