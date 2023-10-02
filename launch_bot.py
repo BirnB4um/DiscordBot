@@ -6,6 +6,12 @@ def log(text):
     with open("data/launcher_log.txt", "a") as file:
         file.write(log_msg+"\n")
 
+
 log("launching bot...")
-output = subprocess.run(["python", "bot.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-log(f"{output.stdout}\n{output.stderr}")
+process = subprocess.Popen(["python", "bot.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+
+for line in process.stdout:
+    with open("data/launcher_log.txt", "a") as logfile:
+        logfile.write(line)
+
+process.wait()
