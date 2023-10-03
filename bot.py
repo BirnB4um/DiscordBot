@@ -259,9 +259,8 @@ async def get_log(ctx):
             plt.title("Server state log")
             plt.legend(["CPU", "CPU_TEMP", "RAM"])
             plt.savefig("temp/server_state_log.png")
+            await ctx.send("server_state_log plot:", file=discord.File("temp/server_state_log.png"))
             
-
-
 
 
 @bot.command(name='clear_log', help=' - clear log files (.clear_log)')
