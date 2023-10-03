@@ -250,7 +250,7 @@ async def get_log(ctx):
                 cpu_temp.append(float(line[1].split(":")[1]))
                 ram.append(float(line[2].split(":")[1]))
 
-            plt.figure(figsize=(10,8))
+            plt.figure(figsize=(12,8))
             plt.plot(dates, cpu, c="b")
             plt.plot(dates, cpu_temp, c="r")
             plt.plot(dates, ram, c="g")
@@ -258,6 +258,7 @@ async def get_log(ctx):
             plt.ylabel("% and °C")
             plt.title("Server state log")
             plt.legend(["CPU", "CPU_TEMP", "RAM"])
+            plt.tight_layout()
             plt.savefig("temp/server_state_log.png")
             await ctx.send("server_state_log plot:", file=discord.File("temp/server_state_log.png"))
             
