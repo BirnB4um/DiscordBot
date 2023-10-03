@@ -11,6 +11,7 @@ import json
 import psutil
 import speedtest
 import subprocess
+import matplotlib.pyplot as plt
 from discord.ext import commands
 import discord
 from discord import FFmpegPCMAudio
@@ -230,6 +231,37 @@ async def get_log(ctx):
     if ctx.author.id == user_id["thimo"]:
         await ctx.send("server_log:", file=discord.File("data/log.txt"))
         await ctx.send("launcher_log:", file=discord.File("data/launcher_log.txt"))
+
+        if os.path.exists("../server_logs/log.txt"):
+            await ctx.send("server_state_log:", file=discord.File("../server_logs/log.txt"))
+            
+            with open("../server_logs/log.txt", "r") as file:
+                lines = file.read().splitlines()
+            cpu = []
+            cpu_temp = []
+            ram = []
+            dates = []
+            for line in lines:
+                line = line.split(" ")
+                date = datetime.strptime(" ".join(line[:2]), "[%d/%m/%Y %H:%M:%S]")
+                dates.append(date)
+                line = line[2].split("/")
+                cpu.append(float(line[0].split(":")[1]))
+                cpu_temp.append(float(line[1].split(":")[1]))
+                ram.append(float(line[2].split(":")[1]))
+
+            plt.figure(figsize=(10,8))
+            plt.plot(dates, cpu, c="b")
+            plt.plot(dates, cpu_temp, c="r")
+            plt.plot(dates, ram, c="g")
+            plt.xlabel("Dates")
+            plt.ylabel("% and °C")
+            plt.title("Server state log")
+            plt.legend(["CPU", "CPU_TEMP", "RAM"])
+            plt.savefig("temp/server_state_log.png")
+            
+
+
 
 
 @bot.command(name='clear_log', help=' - clear log files (.clear_log)')
