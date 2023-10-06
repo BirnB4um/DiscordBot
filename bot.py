@@ -271,7 +271,8 @@ async def clear_log(ctx):
             file.write("")
         with open("data/launcher_log.txt", "w") as file:
             file.write("")
-    log("clearing log files")
+        log("clearing log files")
+        await ctx.send("cleared logs")
         
 
 
@@ -501,18 +502,22 @@ async def screenshot(ctx, amount=1):
             break
 
 
-@bot.command(name='server_status', help=' - show server status (.server_status)')
-async def server_status(ctx):
+@bot.command(name='server_status', help=' - show server status (.server_status [do_network_speed])')
+async def server_status(ctx, do_network_speed="no"):
 
-    try:
-        st = speedtest.Speedtest()
-        st.get_best_server()
+    if do_network_speed.lower() == "yes":
+        try:
+            st = speedtest.Speedtest()
+            st.get_best_server()
 
-        DL_SPEED = round(st.download() / 1_000_000, 3)
-        UP_SPEED = round(st.upload() / 1_000_000, 3)
-    except:
-        DL_SPEED = -1
-        UP_SPEED = -1
+            DL_SPEED = round(st.download() / 1_000_000, 3)
+            UP_SPEED = round(st.upload() / 1_000_000, 3)
+        except:
+            DL_SPEED = -1
+            UP_SPEED = -1
+    else:
+            DL_SPEED = -1
+            UP_SPEED = -1
 
     try:
         CPU_TEMP = CPUTemperature().temperature
@@ -612,6 +617,7 @@ async def repeat(ctx, *message):
 
 @bot.command(name='restart', help=' - restart the bot')
 async def restart(ctx):
+    await ctx.send("restarting...")
     await bot.close()
 
 
