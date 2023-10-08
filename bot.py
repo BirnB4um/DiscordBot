@@ -101,7 +101,8 @@ sound_files = {
     "josef": "sounds/josef1.wav",
     "dune": "sounds/dune.wav",
     "nutella":"sounds/nutella.wav",
-    "korn":"sounds/Korn.mp3"
+    "korn":"sounds/Korn.mp3",
+    "grünen":"sounds/die_gruenen.mp3",
     }
 
 #=======================
