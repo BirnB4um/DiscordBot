@@ -223,6 +223,15 @@ async def shutdown(ctx, confirmation=""):
             return
         await ctx.send("confirm with '.shutdown yes'")
 
+@bot.command(name='reboot', help=' - reboot server (.reboot yes)')
+async def reboot(ctx, confirmation=""):
+    if ctx.author.id == user_id["thimo"]:
+        if confirmation.lower() == "yes":
+            await ctx.send("rebooting...")
+            log("rebooting server...")
+            os.system("sudo reboot")
+            return
+        await ctx.send("confirm with '.reboot yes'")
 
 
 @bot.command(name='get_log', help=' - send log files (.get_log)')
