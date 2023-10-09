@@ -43,6 +43,32 @@ def get_image_data(src_url):
         return -1
     return img.content
 
+def get_random_screenshot():
+    sleep_between_tries = 2
+    max_tries = 10
+    tries = 0
+    while True:
+        tries += 1
+        if tries > max_tries:
+            sleep(sleep_between_tries)
+            return None, None, None, tries
+
+        id = get_random_id(6)
+        url = get_image_url(id)
+        if url == -1:
+            sleep(sleep_between_tries)
+            continue
+
+        data = get_image_data(url)
+        if data == -1:
+            sleep(sleep_between_tries)
+            continue   
+        if len(data) == 503:
+            sleep(sleep_between_tries)
+            continue
+
+        return id, url, data, tries
+
 def save_image(name, image_data):
     with open(name, 'wb') as file:
         file.write(image_data)

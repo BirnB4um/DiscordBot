@@ -473,43 +473,21 @@ async def thumbnail(ctx, link=""):
 async def screenshot(ctx, amount=1):
     amount = constrain(amount, 1, 30)
 
-    max_tries = 10
     sleep_between_images = 4
-    sleep_between_tries = 2
 
     for number in range(amount):
-        tries = 0
-        while True:
-            tries += 1
-            if tries > max_tries:
-                await ctx.send(f"exceeded max number of tries. Nr: {number+1}/{amount}")
-                await asyncio.sleep(sleep_between_images)
-                break
+        id, url, data, tries = await bot.loop.run_in_executor(None, rand_screenshot.get_random_screenshot)
+        
+        msg = f"ID: {id}, image nr.: {number+1}/{amount}, nr tries: {tries}, URL: {url}"
+        if "imgur" in url:
+            await ctx.send(msg)
+        else:
+            with open("temp/screenshot.png", 'wb') as file:
+                file.write(data)
 
-            id = rand_screenshot.get_random_id(6)
-            url = rand_screenshot.get_image_url(id)
-            if url == -1:
-                await asyncio.sleep(sleep_between_tries)
-                continue
-
-            data = rand_screenshot.get_image_data(url)
-            if data == -1:
-                await asyncio.sleep(sleep_between_tries)
-                continue   
-            if len(data) == 503:
-                await asyncio.sleep(sleep_between_tries)
-                continue
-            
-            msg = f"ID: {id}, image nr.: {number+1}/{amount}, nr tries: {tries}, URL: {url}"
-            if "imgur" in url:
-                await ctx.send(msg)
-            else:
-                with open("temp/screenshot.png", 'wb') as file:
-                    file.write(data)
-
-                await ctx.send(msg, file=discord.File("temp/screenshot.png"))
-            await asyncio.sleep(sleep_between_images)
-            break
+            await ctx.send(msg, file=discord.File("temp/screenshot.png"))
+        await asyncio.sleep(sleep_between_images)
+        break
 
 
 @bot.command(name='server_status', help=' - show server status (.server_status [do_network_speed])')
