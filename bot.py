@@ -151,9 +151,9 @@ async def on_message(message):
         #if not a command
         if message.content != ".":
             input = f"{message.author.name} is talking to Furby.\n{message.author.name}: {message.content}\nFurby: "
-            output = await bot.loop.run_in_executor(None, picoBot.run, input, 30)
-            output = output.split(f"{message.author.name}:")[0]
-            output = output.replace("Furby: ", "")
+            output = await bot.loop.run_in_executor(None, picoBot.run, input, 20)
+            output = output.lower().split(f"{message.author.name.lower()}:")[0]
+            output = output.replace("furby: ", "")
             if output != "":
                 log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" Furby: {output}"
                 await message.channel.send(output)
@@ -226,9 +226,9 @@ async def talk(ctx, *message):
         return
 
     input = f"{ctx.author.name} is talking to Furby.\n{ctx.author.name}: {msg}\nFurby: "
-    output = await bot.loop.run_in_executor(None, picoBot.run, input, 30)
-    output = output.split(f"{ctx.author.name}:")[0]
-    output = output.replace("Furby: ", "")
+    output = await bot.loop.run_in_executor(None, picoBot.run, input, 20)
+    output = output.lower().split(f"{ctx.author.name.lower()}:")[0]
+    output = output.replace("furby: ", "")
     if output != "":
         await ctx.send(output)
 
