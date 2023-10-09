@@ -19,6 +19,7 @@ from discord import FFmpegPCMAudio
 import module.random_screenshot as rand_screenshot
 import module.youtube_downloader as yt_dl
 import module.GIF_search as GIF_search
+from module.picoGPT import PicoGPT
 
 
 ##### SETUP #####
@@ -47,6 +48,8 @@ def constrain(x, minX, maxX):
 
 
 #=======================
+
+picoBot = PicoGPT()
 
 #witze list
 witze_list = []
@@ -144,13 +147,21 @@ async def on_message(message):
     #if someone sends dm
     if not (message.author == bot.user) and not (message.author.id == user_id["thimo"]) and (message.channel.type == discord.ChannelType.private): 
         log_message = datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" {message.author}: {message.content}"
+
+        #if not a command
+        if message.content != ".":
+            output = bot.loop.run_in_executor(None, picoBot.run(message.content), 30)
+            log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" Furby: {output}"
+            await message.channel.send(output)
+
         user = await bot.fetch_user(user_id["thimo"])
         await user.send(f"```{log_message}```")
         with open("data/chat.txt", "a") as file:
             file.write(log_message + "\n")
 
     #execute command
-    await bot.process_commands(message)
+    if message.content[0] == ".":
+        await bot.process_commands(message)
 
 
 
@@ -197,11 +208,21 @@ async def on_error(event, *args, **kwargs):
     if event == 'on_message':
         log(f'Unhandled message: {args[0]}\n')
     else:
-        log(f"ERROR: other error occured! {args}")
+        log(f"ERROR: other error occured! {args} {kwargs}")
 
 
 ##### COMMANDS ######
 
+
+@bot.command(name='talk', help=' - talk to picoGPT (.talk [message])')
+async def talk(ctx, *message):
+    msg = " ".join(message)
+    if msg == "":
+        await ctx.send("add a message (.talk [message])")
+        return
+
+    output = bot.loop.run_in_executor(None, picoBot.run(msg, 30))
+    await ctx.send(output)
 
 @bot.command(name='pull_update', help=' - pulls the latest update from github (.pull_update yes)')
 async def pull_update(ctx, confirmation=""):
