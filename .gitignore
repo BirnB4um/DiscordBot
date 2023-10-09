@@ -6,3 +6,6 @@
 /data/log.txt
 /data/launcher_log.txt
 /temp/screenshot.png
+/data/picoGPT_encoder.json
+/data/picoGPT_vocab.bpe
+/data/picoGPT_params.pkl
