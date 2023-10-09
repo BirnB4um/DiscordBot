@@ -150,7 +150,7 @@ async def on_message(message):
 
         #if not a command
         if message.content != ".":
-            output = bot.loop.run_in_executor(None, picoBot.run(message.content), 30)
+            output = await bot.loop.run_in_executor(None, picoBot.run(message.content), 30)
             log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" Furby: {output}"
             await message.channel.send(output)
 
@@ -221,7 +221,7 @@ async def talk(ctx, *message):
         await ctx.send("add a message (.talk [message])")
         return
 
-    output = bot.loop.run_in_executor(None, picoBot.run(msg, 30))
+    output = await bot.loop.run_in_executor(None, picoBot.run(msg, 30))
     await ctx.send(output)
 
 @bot.command(name='pull_update', help=' - pulls the latest update from github (.pull_update yes)')
