@@ -477,6 +477,11 @@ async def screenshot(ctx, amount=1):
 
     for number in range(amount):
         id, url, data, tries = await bot.loop.run_in_executor(None, rand_screenshot.get_random_screenshot)
+
+        if url == None:
+            await ctx.send(f"exceeded number of tries ({tries})! skipping this image...")
+            await asyncio.sleep(sleep_between_images)
+            continue
         
         msg = f"ID: {id}, image nr.: {number+1}/{amount}, nr tries: {tries}, URL: {url}"
         if "imgur" in url:
@@ -487,7 +492,7 @@ async def screenshot(ctx, amount=1):
 
             await ctx.send(msg, file=discord.File("temp/screenshot.png"))
         await asyncio.sleep(sleep_between_images)
-        break
+
 
 
 @bot.command(name='server_status', help=' - show server status (.server_status [do_network_speed])')
