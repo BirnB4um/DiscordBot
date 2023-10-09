@@ -150,9 +150,14 @@ async def on_message(message):
 
         #if not a command
         if message.content != ".":
-            output = await bot.loop.run_in_executor(None, picoBot.run(message.content), 30)
-            log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" Furby: {output}"
-            await message.channel.send(output)
+            input = f"{message.author.name} is talking to Furby.\n{message.author.name}: {message.content}\nFurby: "
+            output = await bot.loop.run_in_executor(None, picoBot.run(input, 10))
+            log(type(output))
+            log(output)
+            output = output.split(f"{message.author.name}:")[0]
+            if output != "":
+                log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" Furby: {output}"
+                await message.channel.send(output)
 
         user = await bot.fetch_user(user_id["thimo"])
         await user.send(f"```{log_message}```")
@@ -221,8 +226,13 @@ async def talk(ctx, *message):
         await ctx.send("add a message (.talk [message])")
         return
 
-    output = await bot.loop.run_in_executor(None, picoBot.run(msg, 30))
-    await ctx.send(output)
+    input = f"{ctx.author.name} is talking to Furby.\n{ctx.author.name}: {msg}\nFurby: "
+    output = await bot.loop.run_in_executor(None, picoBot.run(input, 10))
+    log(type(output))
+    log(output)
+    output = output.split(f"{ctx.author.name}:")[0]
+    if output != "":
+        await ctx.send(output)
 
 @bot.command(name='pull_update', help=' - pulls the latest update from github (.pull_update yes)')
 async def pull_update(ctx, confirmation=""):
