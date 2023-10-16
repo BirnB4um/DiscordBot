@@ -19,7 +19,7 @@ from discord import FFmpegPCMAudio
 import module.random_screenshot as rand_screenshot
 import module.youtube_downloader as yt_dl
 import module.GIF_search as GIF_search
-from module.picoGPT import PicoGPT
+from module.chatbot import Chatbot
 
 
 ##### SETUP #####
@@ -49,7 +49,7 @@ def constrain(x, minX, maxX):
 
 #=======================
 
-picoBot = PicoGPT()
+chatbot = Chatbot()
 
 #witze list
 witze_list = []
@@ -150,11 +150,12 @@ async def on_message(message):
 
         #if not a command
         if message.content != ".":
-            input = f"{message.author.name} is talking to Furby.\n{message.author.name}: {message.content}\nFurby: "
-            output = await bot.loop.run_in_executor(None, picoBot.run, input, 20)
-            output = output.lower().split(f"{message.author.name.lower()}:")[0]
-            output = output.replace("furby:", "")
-            if output != "":
+            input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}Furby:{chatbot.TOKENS['start_of_message']}"
+            if chatbot.check_if_running():
+                await message.channel.send("chatbot is already running!")
+                log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" chatbot was already running!"
+            else:
+                output = await bot.loop.run_in_executor(None, chatbot.run, input, 50)
                 log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" Furby: {output}"
                 await message.channel.send(output)
 
@@ -218,19 +219,24 @@ async def on_error(event, *args, **kwargs):
 ##### COMMANDS ######
 
 
-@bot.command(name='talk', help=' - talk to picoGPT (.talk [message])')
+@bot.command(name='reset_chatbot', help=' - reset chatbot (.reset_chatbot)')
+async def reset_chatbot(ctx,):
+    chatbot.reset_hidden()
+    await ctx.send("resetting complete.")
+
+@bot.command(name='talk', help=' - talk to furby (.talk [message])')
 async def talk(ctx, *message):
     msg = " ".join(message)
     if msg == "":
         await ctx.send("add a message (.talk [message])")
         return
 
-    input = f"{ctx.author.name} is talking to Furby.\n{ctx.author.name}: {msg}\nFurby: "
-    output = await bot.loop.run_in_executor(None, picoBot.run, input, 20)
-    output = output.lower().split(f"{ctx.author.name.lower()}:")[0]
-    output = output.replace("furby:", "")
-    if output != "":
-        await ctx.send(output)
+    input = f"{ctx.author.name}:{chatbot.TOKENS['start_of_message']}{msg}{chatbot.TOKENS['end_of_message']}Furby:{chatbot.TOKENS['start_of_message']}"
+    if chatbot.check_if_running():
+        await ctx.send("chatbot is already running!")
+        return
+    output = await bot.loop.run_in_executor(None, chatbot.run, input, 50)
+    await ctx.send(output)
 
 @bot.command(name='pull_update', help=' - pulls the latest update from github (.pull_update yes)')
 async def pull_update(ctx, confirmation=""):
