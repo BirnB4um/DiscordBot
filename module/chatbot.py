@@ -49,13 +49,13 @@ class Chatbot:
                 return
             self.is_running = True
 
-        input = np.array(self.tokenizer.encode(prompt).ids).astype(np.int64).reshape(1, -1)
+        input = np.array(self.tokenizer.encode(prompt).ids).reshape(1, -1)
         output_list = []
 
         for i in range(n_tokens_to_generate):
 
             ort_inputs = {
-                "input_tokens": input,
+                "input_tokens": input.astype(np.int64),
                 "hidden_state_in": self.hidden_state,
                 "cell_state_in": self.cell_state
             }
