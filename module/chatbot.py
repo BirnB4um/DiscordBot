@@ -26,7 +26,7 @@ class Chatbot:
         self.hidden_size = 128
 
 
-        self.chatbot = ort.InferenceSession("data/chatbot_model.onnx")
+        self.chatbot = ort.InferenceSession("data/chatbot_lstm_model.onnx")
         self.tokenizer = Tokenizer.from_file("data/tokenizer.json")
         self.som_token_index = self.tokenizer.token_to_id(self.TOKENS["start_of_message"])
         self.eom_token_index = self.tokenizer.token_to_id(self.TOKENS["end_of_message"])
