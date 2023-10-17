@@ -21,7 +21,7 @@ class Chatbot:
                     "padding": "[PAD]",
                     }
         
-        self.num_layers = 3
+        self.num_layers = 4
         self.emb_dim = 128
         self.hidden_size = 128
 
