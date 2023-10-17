@@ -5,13 +5,12 @@ import numpy as np
 import threading
 import onnxruntime as ort
 import random
-import sentencepiece as spm
+from tokenizers import Tokenizer
 
 
 class Chatbot:
 
     def __init__(self):
-        self.load_model()
         self.is_running = False
         self.lock = threading.Lock()
 
@@ -29,10 +28,9 @@ class Chatbot:
 
 
         self.chatbot = ort.InferenceSession("data/chatbot_model.onnx")
-        self.tokenizer = spm.SentencePieceProcessor()
-        self.tokenizer.Load("data/tokenizer.model")
-        self.som_token_index = self.tokenizer.PieceToId(self.TOKENS["start_of_message"])
-        self.eom_token_index = self.tokenizer.PieceToId(self.TOKENS["end_of_message"])
+        self.tokenizer = Tokenizer.from_file("data/tokenizer.json")
+        self.som_token_index = self.tokenizer.token_to_id(self.TOKENS["start_of_message"])
+        self.eom_token_index = self.tokenizer.token_to_id(self.TOKENS["end_of_message"])
 
         self.hidden_state = np.zeros((self.num_layers, 1, self.hidden_size)).astype(np.float32)
         self.cell_state = np.zeros((self.num_layers, 1, self.hidden_size)).astype(np.float32)
@@ -51,7 +49,7 @@ class Chatbot:
                 return
             self.is_running = True
 
-        input = np.array(self.tokenizer.Encode(prompt)).astype(np.int64).reshape(1, -1)
+        input = np.array(self.tokenizer.encode(prompt).ids).astype(np.int64).reshape(1, -1)
         output_list = []
 
         for i in range(n_tokens_to_generate):
@@ -70,7 +68,7 @@ class Chatbot:
             if input[0][0] == self.eom_token_index:
                 break
 
-        generated_message = self.tokenizer.Decode(output_list)
+        generated_message = self.tokenizer.decode(output_list)
         generated_message = generated_message.replace(self.TOKENS["start_of_message"], "")
         generated_message = generated_message.replace(self.TOKENS["end_of_message"], "")
         generated_message = generated_message.replace(self.TOKENS["newline"], "\n")
