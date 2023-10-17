@@ -19,7 +19,6 @@ class Chatbot:
                     "start_of_message": "[SOM]",
                     "end_of_message": "[EOM]",
                     "padding": "[PAD]",
-                    "newline": "[NEWLINE]",
                     }
         
         self.num_layers = 3
@@ -71,9 +70,8 @@ class Chatbot:
         generated_message = self.tokenizer.decode(output_list)
         generated_message = generated_message.replace(self.TOKENS["start_of_message"], "")
         generated_message = generated_message.replace(self.TOKENS["end_of_message"], "")
-        generated_message = generated_message.replace(self.TOKENS["newline"], "\n")
 
-        if generated_message.replace("\n", "") == "":
+        if generated_message.replace("\n", "").strip(" ") == "":
             generated_message = "[EMPTY GENERATION]"
 
         with self.lock:
