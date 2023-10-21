@@ -150,7 +150,7 @@ async def on_message(message):
         log_message = datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" {message.author}: {message.content}"
 
         #if not a command, send to chatbot
-        if message.content != ".":
+        if message.content[0] != ".":
             input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}Furby:{chatbot.TOKENS['start_of_message']}"
             if chatbot.check_if_running():
                 await message.channel.send("chatbot is already running! try again later.")
