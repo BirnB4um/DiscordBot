@@ -48,54 +48,58 @@ class Chatbot:
             if self.is_running:
                 return
             self.is_running = True
+        try:
+            input_tokens = np.array(self.tokenizer.encode(prompt).ids).astype(np.int64).reshape(1, -1)
+            output_list = []
 
-        input_tokens = np.array(self.tokenizer.encode(prompt).ids).astype(np.int64).reshape(1, -1)
-        output_list = []
+            for i in range(n_tokens_to_generate):
 
-        for i in range(n_tokens_to_generate):
+                ort_inputs = {
+                    "input_tokens": input_tokens,
+                    "hidden_state_in": self.hidden_state,
+                    "cell_state_in": self.cell_state
+                }
+                ort_outputs = self.chatbot.run(None, ort_inputs)
+            
+                logits = ort_outputs[0][0][-1]
+                logits = logits / self.temperature
+                exp_logits = np.exp(logits - np.max(logits))
+                logits_sum = np.sum(exp_logits)
+                probs = exp_logits / logits_sum
+                input_tokens = np.random.choice(range(self.VOCAB_SIZE), p=probs).astype(np.int64).reshape(1, 1)
 
+                output_list.append(int(input_tokens[0][0]))
+                self.hidden_state = ort_outputs[1]
+                self.cell_state = ort_outputs[2]
+
+                if output_list[-1] == self.eom_token_index:
+                    break
+                if i == 49:
+                    output_list[-1] = self.eom_token_index
+                    break
+
+            #feed EOM token back into model
             ort_inputs = {
-                "input_tokens": input_tokens,
+                "input_tokens": np.array(self.eom_token_index).astype(np.int64).reshape(1, 1),
                 "hidden_state_in": self.hidden_state,
                 "cell_state_in": self.cell_state
             }
             ort_outputs = self.chatbot.run(None, ort_inputs)
-        
-            logits = ort_outputs[0][0][-1]
-            logits = logits / self.temperature
-            exp_logits = np.exp(logits - np.max(logits))
-            logits_sum = np.sum(exp_logits)
-            probs = exp_logits / logits_sum
-            input_tokens = np.random.choice(range(self.VOCAB_SIZE), p=probs).astype(np.int64).reshape(1, 1)
-
-            output_list.append(int(input_tokens[0][0]))
             self.hidden_state = ort_outputs[1]
             self.cell_state = ort_outputs[2]
 
-            if output_list[-1] == self.eom_token_index:
-                break
-            if i == 49:
-                output_list[-1] = self.eom_token_index
-                break
 
-        #feed EOM token back into model
-        ort_inputs = {
-            "input_tokens": np.array(self.eom_token_index).astype(np.int64).reshape(1, 1),
-            "hidden_state_in": self.hidden_state,
-            "cell_state_in": self.cell_state
-        }
-        ort_outputs = self.chatbot.run(None, ort_inputs)
-        self.hidden_state = ort_outputs[1]
-        self.cell_state = ort_outputs[2]
+            generated_message = self.tokenizer.decode(output_list)
+            generated_message = generated_message.replace(self.TOKENS["start_of_message"], "")
+            generated_message = generated_message.replace(self.TOKENS["end_of_message"], "")
+            generated_message = generated_message.replace(self.TOKENS["padding"], "")
 
+            if generated_message.replace("\n", "").strip(" ") == "":
+                generated_message = "[EMPTY GENERATION]"
 
-        generated_message = self.tokenizer.decode(output_list)
-        generated_message = generated_message.replace(self.TOKENS["start_of_message"], "")
-        generated_message = generated_message.replace(self.TOKENS["end_of_message"], "")
-        generated_message = generated_message.replace(self.TOKENS["padding"], "")
-
-        if generated_message.replace("\n", "").strip(" ") == "":
-            generated_message = "[EMPTY GENERATION]"
+        except Exception as e:
+            generated_message = "[ERROR GENERATING RESPONSE]"
+            print(f"ERROR in chatbot: {e}")
 
         with self.lock:
             self.is_running = False
