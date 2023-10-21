@@ -145,24 +145,26 @@ async def on_voice_state_update(member, before, after):
 async def on_message(message):
 
     #if someone sends dm
-    if not (message.author == bot.user) and not (message.author.id == user_id["thimo"]) and (message.channel.type == discord.ChannelType.private): 
+    if not (message.author == bot.user) and (message.channel.type == discord.ChannelType.private): 
+        user_is_thimo = message.author.id == user_id["thimo"]
         log_message = datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" {message.author}: {message.content}"
 
-        #if not a command
+        #if not a command, send to chatbot
         if message.content != ".":
             input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}Furby:{chatbot.TOKENS['start_of_message']}"
             if chatbot.check_if_running():
-                await message.channel.send("chatbot is already running!")
+                await message.channel.send("chatbot is already running! try again later.")
                 log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" chatbot was already running!"
             else:
                 output = await bot.loop.run_in_executor(None, chatbot.run, input, 50)
                 log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" Furby: {output}"
                 await message.channel.send(output)
 
-        user = await bot.fetch_user(user_id["thimo"])
-        await user.send(f"```{log_message}```")
-        with open("data/chat.txt", "a") as file:
-            file.write(log_message + "\n")
+        if not user_is_thimo:
+            user = await bot.fetch_user(user_id["thimo"])
+            await user.send(f"```{log_message}```")
+            with open("data/chat.txt", "a") as file:
+                file.write(log_message + "\n")
 
     #execute command
     if message.content[0] == ".":
@@ -233,7 +235,7 @@ async def talk(ctx, *message):
 
     input = f"{ctx.author.name}:{chatbot.TOKENS['start_of_message']}{msg}{chatbot.TOKENS['end_of_message']}Furby:{chatbot.TOKENS['start_of_message']}"
     if chatbot.check_if_running():
-        await ctx.send("chatbot is already running!")
+        await ctx.send("chatbot is already running! try again later.")
         return
     output = await bot.loop.run_in_executor(None, chatbot.run, input, 50)
     await ctx.send(output)
