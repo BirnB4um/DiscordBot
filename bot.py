@@ -143,9 +143,11 @@ async def on_voice_state_update(member, before, after):
 
 @bot.event
 async def on_message(message):
+    if (message.author == bot.user):
+        return
 
     #if someone sends dm
-    if not (message.author == bot.user) and (message.channel.type == discord.ChannelType.private): 
+    if (message.channel.type == discord.ChannelType.private): 
         user_is_thimo = message.author.id == user_id["thimo"]
         log_message = datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" {message.author}: {message.content}"
 

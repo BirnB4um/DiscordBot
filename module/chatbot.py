@@ -21,16 +21,16 @@ class Chatbot:
                     "padding": "[PAD]",
                     }
         
-        self.num_layers = 4
-        self.emb_dim = 128
-        self.hidden_size = 128
+        self.num_layers = 3
+        self.emb_dim = 512
+        self.hidden_size = 512
         self.temperature = 0.7
 
 
         self.chatbot = ort.InferenceSession("data/chatbot_lstm_model.onnx")
         self.tokenizer = Tokenizer.from_file("data/tokenizer.json")
-        self.som_token_index = self.tokenizer.token_to_id(self.TOKENS["start_of_message"])
-        self.eom_token_index = self.tokenizer.token_to_id(self.TOKENS["end_of_message"])
+        self.som_token_index = int(self.tokenizer.token_to_id(self.TOKENS["start_of_message"]))
+        self.eom_token_index = int(self.tokenizer.token_to_id(self.TOKENS["end_of_message"]))
 
         self.hidden_state = np.zeros((self.num_layers, 1, self.hidden_size)).astype(np.float32)
         self.cell_state = np.zeros((self.num_layers, 1, self.hidden_size)).astype(np.float32)
@@ -60,7 +60,6 @@ class Chatbot:
                     "cell_state_in": self.cell_state
                 }
                 ort_outputs = self.chatbot.run(None, ort_inputs)
-            
                 logits = ort_outputs[0][0][-1]
                 logits = logits / self.temperature
                 exp_logits = np.exp(logits - np.max(logits))
@@ -77,6 +76,7 @@ class Chatbot:
                 if i == 49:
                     output_list[-1] = self.eom_token_index
                     break
+            
 
             #feed EOM token back into model
             ort_inputs = {
