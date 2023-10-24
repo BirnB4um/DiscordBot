@@ -153,13 +153,13 @@ async def on_message(message):
 
         #if not a command, send to chatbot
         if message.content[0] != ".":
-            input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}Furby:{chatbot.TOKENS['start_of_message']}"
+            input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}furby:{chatbot.TOKENS['start_of_message']}"
             if chatbot.check_if_running():
                 await message.channel.send("chatbot is already running! try again later.")
                 log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" chatbot was already running!"
             else:
                 output = await bot.loop.run_in_executor(None, chatbot.run, input, 50)
-                log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" Furby: {output}"
+                log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" furby: {output}"
                 await message.channel.send(output)
 
         if not user_is_thimo:
@@ -245,7 +245,7 @@ async def talk(ctx, *message):
         await ctx.send("add a message (.talk [message])")
         return
 
-    input = f"{ctx.author.name}:{chatbot.TOKENS['start_of_message']}{msg}{chatbot.TOKENS['end_of_message']}Furby:{chatbot.TOKENS['start_of_message']}"
+    input = f"{ctx.author.name}:{chatbot.TOKENS['start_of_message']}{msg}{chatbot.TOKENS['end_of_message']}furby:{chatbot.TOKENS['start_of_message']}"
     if chatbot.check_if_running():
         await ctx.send("chatbot is already running! try again later.")
         return
