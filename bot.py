@@ -224,9 +224,19 @@ async def on_error(event, *args, **kwargs):
 
 
 @bot.command(name='reset_chatbot', help=' - reset chatbot (.reset_chatbot)')
-async def reset_chatbot(ctx,):
+async def reset_chatbot(ctx):
     chatbot.reset_hidden()
     await ctx.send("resetting complete.")
+
+@bot.command(name='set_chatbot_confidence', help=' - set confidence of chatbot. value < 1 -> more confident, value > 1 -> more random (default: 0.5)  (.set_chatbot_confidence [value])')
+async def set_chatbot_confidence(ctx, conf=None):
+    try:
+        conf = float(conf)
+    except:
+        await ctx.send("value has to be a float")
+        return
+    chatbot.temperature = conf
+    await ctx.send(f"confidence set to {chatbot.temperature}")
 
 @bot.command(name='talk', help=' - talk to furby (.talk [message])')
 async def talk(ctx, *message):

@@ -21,10 +21,10 @@ class Chatbot:
                     "padding": "[PAD]",
                     }
         
-        self.num_layers = 3
         self.emb_dim = 512
         self.hidden_size = 512
-        self.temperature = 0.7
+        self.num_layers = 3
+        self.temperature = 0.5
 
 
         self.chatbot = ort.InferenceSession("data/chatbot_lstm_model.onnx")
