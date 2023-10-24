@@ -146,6 +146,16 @@ async def on_message(message):
     if (message.author == bot.user):
         return
 
+    #if in furby channel
+    if message.channel.id == 1166426231445655653:
+        input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}furby:{chatbot.TOKENS['start_of_message']}"
+        if chatbot.check_if_running():
+            await message.channel.send("chatbot is already running! try again later.")
+        else:
+            output = await bot.loop.run_in_executor(None, chatbot.run, input, 50)
+            await message.channel.send(output)
+        return
+
     #if someone sends dm
     if (message.channel.type == discord.ChannelType.private): 
         user_is_thimo = message.author.id == user_id["thimo"]
