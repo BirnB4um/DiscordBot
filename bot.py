@@ -153,13 +153,10 @@ async def on_message(message):
     if (message.author == bot.user):
         return
     
-    #execute command
-    if message.content[0] == ".":
-        await bot.process_commands(message)
-        return
+    is_command = message.content[0] == "."
 
     #if in furby channel
-    elif message.channel.id == 1166426231445655653:
+    if message.channel.id == 1166426231445655653 and not is_command:
         if chatbot_mode == "discord":
             input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}furby:{chatbot.TOKENS['start_of_message']}"
         elif chatbot_mode == "4chan":
@@ -173,23 +170,24 @@ async def on_message(message):
         return
 
     #if someone sends dm
-    elif (message.channel.type == discord.ChannelType.private): 
+    if (message.channel.type == discord.ChannelType.private): 
         user_is_thimo = message.author.id == user_id["thimo"]
         log_message = datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" {message.author}: {message.content}"
 
         #send to chatbot
-        if chatbot_mode == "discord":
-            input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}furby:{chatbot.TOKENS['start_of_message']}"
-        elif chatbot_mode == "4chan":
-            input = f"{message.content}{chatbot.TOKENS['seperator']}"
+        if not is_command:
+            if chatbot_mode == "discord":
+                input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}furby:{chatbot.TOKENS['start_of_message']}"
+            elif chatbot_mode == "4chan":
+                input = f"{message.content}{chatbot.TOKENS['seperator']}"
 
-        if chatbot.check_if_running():
-            await message.channel.send("chatbot is already running! try again later.")
-            log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" chatbot was already running!"
-        else:
-            output = await bot.loop.run_in_executor(None, chatbot.run, input, 50)
-            log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" furby: {output}"
-            await message.channel.send(output)
+            if chatbot.check_if_running():
+                await message.channel.send("chatbot is already running! try again later.")
+                log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" chatbot was already running!"
+            else:
+                output = await bot.loop.run_in_executor(None, chatbot.run, input, 50)
+                log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" furby: {output}"
+                await message.channel.send(output)
 
         #send to thimo
         if not user_is_thimo:
@@ -198,7 +196,9 @@ async def on_message(message):
             with open("data/chat.txt", "a") as file:
                 file.write(log_message + "\n")
 
-
+    #execute command
+    if is_command:
+        await bot.process_commands(message)
 
 
 @bot.event
