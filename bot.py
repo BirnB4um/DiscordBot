@@ -40,8 +40,8 @@ def log(text, print_to_console=False):
     if print_to_console:
         print(log_msg)
 
-def error(text):
-    print(datetime.now().strftime("[%d/%m/%Y %H:%M:%S] ") + text)
+def log_error(text):
+    print(datetime.now().strftime("[%d/%m/%Y %H:%M:%S] Error: ") + text)
 
 def constrain(x, minX, maxX):
     return max(minX, min(maxX, x))
@@ -83,6 +83,10 @@ user_id = {"josef":762641864335556608,
 florida_man_data = []
 with open("data/florida_man.json", "r") as file:
     florida_man_data = json.load(file)
+
+#4chan links
+with open("data/4chan_links.txt", "r", encoding="utf-8") as file:
+    fourchan_links = file.read().splitlines()
 
 
 months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
@@ -225,20 +229,37 @@ async def on_reaction_remove(reaction, user):
 @bot.event
 async def on_error(event, *args, **kwargs):
     if event == 'on_message':
-        log(f'Unhandled message: {args[0]}\n')
+        log_error(f'error occured in on_message(): {args[0]}\n')
     else:
-        log(f"ERROR: other error occured! {args} {kwargs}")
+        log_error(f"other error occured! {args} {kwargs}")
 
+
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandNotFound):
+        await ctx.send("that command doesn't exist. Try .help")
+    log_error(str(error))
 
 ##### COMMANDS ######
 
+
+@bot.command(name='4chan_link', help=' - get a random link from 4chan (.4chan_link [amount])')
+async def fourchan_link(ctx, amount="1"):
+    try:
+        amount = int(amount)
+    except:
+        await ctx.send("amount has to be an integer")
+        return
+
+    amount = constrain(amount, 1, 20)
+    await ctx.send("\n".join(random.sample(fourchan_links, amount)))
 
 @bot.command(name='reset_chatbot', help=' - reset chatbot (.reset_chatbot)')
 async def reset_chatbot(ctx):
     chatbot.reset_hidden()
     await ctx.send("resetting complete.")
 
-@bot.command(name='set_chatbot_confidence', help=' - set confidence of chatbot. value < 1 -> more confident, value > 1 -> more random (default: 0.5)  (.set_chatbot_confidence [value])')
+@bot.command(name='set_chatbot_confidence', category='Chatbot', help=' - set confidence of chatbot. value < 1 -> more confident, value > 1 -> more random (default: 0.5)  (.set_chatbot_confidence [value])')
 async def set_chatbot_confidence(ctx, conf=None):
     try:
         conf = float(conf)
@@ -399,7 +420,7 @@ async def play(ctx, sound=""):
                 await asyncio.sleep(0.5)
 
         except Exception as e:
-            error(str(e))
+            log_error(str(e))
         finally:
             voice_client.stop()
 
