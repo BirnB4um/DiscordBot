@@ -85,8 +85,8 @@ with open("data/florida_man.json", "r") as file:
     florida_man_data = json.load(file)
 
 #4chan links
-with open("data/4chan_links.txt", "r", encoding="utf-8") as file:
-    fourchan_links = file.read().splitlines()
+with open("data/4chan_links.txt", "r") as file:
+    fourchan_links = json.load(file)
 
 
 months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
@@ -243,16 +243,32 @@ async def on_command_error(ctx, error):
 ##### COMMANDS ######
 
 
-@bot.command(name='4chan_link', help=' - get a random link from 4chan (.4chan_link [amount])')
-async def fourchan_link(ctx, amount="1"):
-    try:
-        amount = int(amount)
-    except:
-        await ctx.send("amount has to be an integer")
-        return
+@bot.command(name='4chan_link', help=' - get a random link from 4chan (.4chan_link amount:1 category:image)')
+async def fourchan_link(ctx, *message):
+
+    amount = 1
+    category = None
+    for msg in message:
+        if msg.split(":")[0].lower() == "amount":
+            try:
+                amount = int(":".join(msg.split(":")[1:])[1])
+            except:
+                await ctx.send("amount has to be an integer")
+                return
+        
+        elif msg.split(":")[0].lower() == "category":
+            cat = ":".join(msg.split(":")[1:]).lower()
+            if not (cat in fourchan_links):
+                await ctx.send(f"category '{cat}' not found. try one of these:\n" + ",\n".join(fourchan_links))
+                return
+            else:
+                category = cat
 
     amount = constrain(amount, 1, 20)
-    await ctx.send("\n".join(random.sample(fourchan_links, amount)))
+    if category == None:
+        await ctx.send("\n".join(random.sample(fourchan_links, amount)))
+    else:
+        await ctx.send("\n".join(random.sample(fourchan_links[category], amount)))
 
 @bot.command(name='reset_chatbot', help=' - reset chatbot (.reset_chatbot)')
 async def reset_chatbot(ctx):
