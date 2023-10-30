@@ -19,7 +19,7 @@ from discord import FFmpegPCMAudio
 import module.random_screenshot as rand_screenshot
 import module.youtube_downloader as yt_dl
 import module.GIF_search as GIF_search
-from module.chatbot import Chatbot
+from module.chatbot import DiscordChatbot, FourchanChatbot
 
 
 ##### SETUP #####
@@ -49,7 +49,10 @@ def constrain(x, minX, maxX):
 
 #=======================
 
-chatbot = Chatbot()
+discord_chatbot = DiscordChatbot()
+fourchan_chatbot = FourchanChatbot()
+chatbot_mode = "discord"
+chatbot = discord_chatbot
 
 #witze list
 witze_list = []
@@ -152,7 +155,11 @@ async def on_message(message):
 
     #if in furby channel
     if message.channel.id == 1166426231445655653:
-        input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}furby:{chatbot.TOKENS['start_of_message']}"
+        if chatbot_mode == "discord":
+            input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}furby:{chatbot.TOKENS['start_of_message']}"
+        elif chatbot_mode == "4chan":
+            input = f"{message.content}{chatbot.TOKENS['seperator']}"
+
         if chatbot.check_if_running():
             await message.channel.send("chatbot is already running! try again later.")
         else:
@@ -167,7 +174,11 @@ async def on_message(message):
 
         #if not a command, send to chatbot
         if message.content[0] != ".":
-            input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}furby:{chatbot.TOKENS['start_of_message']}"
+            if chatbot_mode == "discord":
+                input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}furby:{chatbot.TOKENS['start_of_message']}"
+            elif chatbot_mode == "4chan":
+                input = f"{message.content}{chatbot.TOKENS['seperator']}"
+
             if chatbot.check_if_running():
                 await message.channel.send("chatbot is already running! try again later.")
                 log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" chatbot was already running!"
@@ -269,6 +280,24 @@ async def fourchan_link(ctx, *message):
     else:
         await ctx.send("\n".join(random.sample(fourchan_links[category], amount)))
 
+
+@bot.command(name='set_chatbot', help=' - set which chatbot to use (.set_chatbot [discord/4chan])')
+async def set_chatbot(ctx, model="discord"):
+    global chatbot_mode, chatbot
+    if model == "discord":
+        chatbot = discord_chatbot
+        chatbot_mode = "discord"
+    elif model == "4chan":
+        chatbot = fourchan_chatbot
+        chatbot_mode = "4chan"
+    else:
+        await ctx.send("model has to be either 'discord' or '4chan'")
+        return
+    
+    chatbot.reset_hidden()
+    await ctx.send("chatbot set to: " + model)
+
+
 @bot.command(name='reset_chatbot', help=' - reset chatbot (.reset_chatbot)')
 async def reset_chatbot(ctx):
     chatbot.reset_hidden()
@@ -283,20 +312,6 @@ async def set_chatbot_confidence(ctx, conf=None):
         return
     chatbot.temperature = conf
     await ctx.send(f"confidence set to {chatbot.temperature}")
-
-@bot.command(name='talk', help=' - talk to furby (.talk [message])')
-async def talk(ctx, *message):
-    msg = " ".join(message)
-    if msg == "":
-        await ctx.send("add a message (.talk [message])")
-        return
-
-    input = f"{ctx.author.name}:{chatbot.TOKENS['start_of_message']}{msg}{chatbot.TOKENS['end_of_message']}furby:{chatbot.TOKENS['start_of_message']}"
-    if chatbot.check_if_running():
-        await ctx.send("chatbot is already running! try again later.")
-        return
-    output = await bot.loop.run_in_executor(None, chatbot.run, input, 50)
-    await ctx.send(output)
 
 @bot.command(name='pull_update', help=' - pulls the latest update from github (.pull_update yes)')
 async def pull_update(ctx, confirmation=""):

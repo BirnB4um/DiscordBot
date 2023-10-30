@@ -1,7 +1,9 @@
 
 commands:
 	- download_yt: download a youtube video
+	- generate_4chan: generate an entire 4chan thread
 
 
 - volume when using .play
 - playback speed when using .play
+- shutdown bot when no internet
