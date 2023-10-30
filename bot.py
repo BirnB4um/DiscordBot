@@ -152,9 +152,14 @@ async def on_voice_state_update(member, before, after):
 async def on_message(message):
     if (message.author == bot.user):
         return
+    
+    #execute command
+    if message.content[0] == ".":
+        await bot.process_commands(message)
+        return
 
     #if in furby channel
-    if message.channel.id == 1166426231445655653:
+    elif message.channel.id == 1166426231445655653:
         if chatbot_mode == "discord":
             input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}furby:{chatbot.TOKENS['start_of_message']}"
         elif chatbot_mode == "4chan":
@@ -168,34 +173,31 @@ async def on_message(message):
         return
 
     #if someone sends dm
-    if (message.channel.type == discord.ChannelType.private): 
+    elif (message.channel.type == discord.ChannelType.private): 
         user_is_thimo = message.author.id == user_id["thimo"]
         log_message = datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" {message.author}: {message.content}"
 
-        #if not a command, send to chatbot
-        if message.content[0] != ".":
-            if chatbot_mode == "discord":
-                input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}furby:{chatbot.TOKENS['start_of_message']}"
-            elif chatbot_mode == "4chan":
-                input = f"{message.content}{chatbot.TOKENS['seperator']}"
+        #send to chatbot
+        if chatbot_mode == "discord":
+            input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}furby:{chatbot.TOKENS['start_of_message']}"
+        elif chatbot_mode == "4chan":
+            input = f"{message.content}{chatbot.TOKENS['seperator']}"
 
-            if chatbot.check_if_running():
-                await message.channel.send("chatbot is already running! try again later.")
-                log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" chatbot was already running!"
-            else:
-                output = await bot.loop.run_in_executor(None, chatbot.run, input, 50)
-                log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" furby: {output}"
-                await message.channel.send(output)
+        if chatbot.check_if_running():
+            await message.channel.send("chatbot is already running! try again later.")
+            log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" chatbot was already running!"
+        else:
+            output = await bot.loop.run_in_executor(None, chatbot.run, input, 50)
+            log_message += "\n" + datetime.now().strftime("[%d/%m/%Y %H:%M:%S]") + f" furby: {output}"
+            await message.channel.send(output)
 
+        #send to thimo
         if not user_is_thimo:
             user = await bot.fetch_user(user_id["thimo"])
             await user.send(f"```{log_message}```")
             with open("data/chat.txt", "a") as file:
                 file.write(log_message + "\n")
 
-    #execute command
-    if message.content[0] == ".":
-        await bot.process_commands(message)
 
 
 
@@ -280,6 +282,31 @@ async def fourchan_link(ctx, *message):
     else:
         await ctx.send("\n".join(random.sample(fourchan_links[category], amount)))
 
+
+@bot.command(name='generate_4chan', help=' - generate a 4chan conversation (.generate_4chan [number_of_messages])')
+async def generate_4chan(ctx, number_of_messages="500"):
+
+    try:
+        number_of_messages = int(number_of_messages)
+    except:
+        await ctx.send("number_of_messages has to be an integer")
+        return
+    number_of_messages = constrain(number_of_messages, 1, 1000)
+    
+    if chatbot.check_if_running():
+        await ctx.send("chatbot is already running! try again later.")
+    else:
+        temp_hidden = fourchan_chatbot.hidden_state
+        temp_cell = fourchan_chatbot.cell_state
+        fourchan_chatbot.reset_hidden()
+
+        output = await bot.loop.run_in_executor(None, fourchan_chatbot.run_continuous, number_of_messages)
+        output = "```" + "```\n```".join(output.split(fourchan_chatbot.TOKENS["seperator"])) + "```"
+
+        fourchan_chatbot.hidden_state = temp_hidden
+        fourchan_chatbot.cell_state = temp_cell
+
+        await ctx.send(output)
 
 @bot.command(name='set_chatbot', help=' - set which chatbot to use (.set_chatbot [discord/4chan])')
 async def set_chatbot(ctx, model="discord"):
