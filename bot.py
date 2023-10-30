@@ -85,7 +85,7 @@ with open("data/florida_man.json", "r") as file:
     florida_man_data = json.load(file)
 
 #4chan links
-with open("data/4chan_links.txt", "r") as file:
+with open("data/4chan_link.json", "r") as file:
     fourchan_links = json.load(file)
 
 
@@ -245,13 +245,12 @@ async def on_command_error(ctx, error):
 
 @bot.command(name='4chan_link', help=' - get a random link from 4chan (.4chan_link amount:1 category:image)')
 async def fourchan_link(ctx, *message):
-
     amount = 1
     category = None
     for msg in message:
         if msg.split(":")[0].lower() == "amount":
             try:
-                amount = int(":".join(msg.split(":")[1:])[1])
+                amount = int(":".join(msg.split(":")[1:]))
             except:
                 await ctx.send("amount has to be an integer")
                 return
@@ -263,10 +262,10 @@ async def fourchan_link(ctx, *message):
                 return
             else:
                 category = cat
-
+                
     amount = constrain(amount, 1, 20)
     if category == None:
-        await ctx.send("\n".join(random.sample(fourchan_links, amount)))
+        await ctx.send("\n".join([random.choice(fourchan_links[random.choice(list(fourchan_links))]) for x in range(amount)]))
     else:
         await ctx.send("\n".join(random.sample(fourchan_links[category], amount)))
 
