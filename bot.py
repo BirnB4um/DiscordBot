@@ -29,6 +29,7 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 intents = discord.Intents.all()
 intents.members = True
 bot = commands.Bot(command_prefix='.', intents=intents)
+restart_delay = 0
 
 
 
@@ -746,8 +747,15 @@ async def repeat(ctx, *message):
 
 
 @bot.command(name='restart', help=' - restart the bot')
-async def restart(ctx):
-    await ctx.send("restarting...")
+async def restart(ctx, delay="0"):
+    global restart_delay
+    try:
+        restart_delay = int(delay)
+        restart_delay = constrain(restart_delay, 0, 3600) # max 1 hour delay
+        await ctx.send(f"restarting in {restart_delay} seconds...")
+    except:
+        restart_delay = 0
+        await ctx.send("restarting...")
     await bot.close()
 
 
@@ -756,4 +764,4 @@ async def restart(ctx):
 log("starting bot")
 bot.run(TOKEN)
 log("restarting...")
-time.sleep(5)
+time.sleep(5+restart_delay)
