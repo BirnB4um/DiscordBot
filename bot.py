@@ -339,7 +339,7 @@ async def set_chatbot_confidence(ctx, conf=None):
         await ctx.send("value has to be a float")
         return
     chatbot.temperature = conf
-    await ctx.send(f"confidence set to {chatbot.temperature}")
+    await ctx.send(f"confidence of chatbot {chatbot_mode} set to {chatbot.temperature}")
 
 @bot.command(name='pull_update', help=' - pulls the latest update from github (.pull_update yes)')
 async def pull_update(ctx, confirmation=""):
@@ -521,16 +521,26 @@ async def resume(ctx):
             vc.resume()
     
 
-
-
 @bot.command(name='spruch', help=' - get random spruch (.spruch [amount])')
-async def spruch(ctx, amount=1):
+async def spruch(ctx, amount="1"):
+    try:
+        amount = int(amount)
+    except:
+        await ctx.send("amount should be an integer.")
+        return
+
     amount = constrain(amount, 1, 10)
     await ctx.send("\n".join([random.choice(sprueche_list) for i in range(amount)]))
 
 
 @bot.command(name='joke', help=' - get random joke (.joke [amount])')
-async def joke(ctx, amount=1):
+async def joke(ctx, amount="1"):
+    try:
+        amount = int(amount)
+    except:
+        await ctx.send("amount should be an integer.")
+        return
+
     amount = constrain(amount, 1, 10)
     await ctx.send("\n\n\n".join([random.choice(witze_list) for i in range(amount)]))
 
@@ -608,7 +618,12 @@ async def thumbnail(ctx, link=""):
 
 
 @bot.command(name='screenshot', help=' - get random screenshot (.screenshot [amount])')
-async def screenshot(ctx, amount=1):
+async def screenshot(ctx, amount="1"):
+    try:
+        amount = int(amount)
+    except:
+        await ctx.send("amount should be an integer.")
+        return
     amount = constrain(amount, 1, 30)
 
     sleep_between_images = 4
@@ -709,7 +724,12 @@ async def to(ctx, name="", *message):
 
 
 @bot.command(name='sheep', help=' - random image of a sheep (.sheep [amount])')
-async def sheep(ctx, amount=1):
+async def sheep(ctx, amount="1"):
+    try:
+        amount = int(amount)
+    except:
+        await ctx.send("amount should be an integer.")
+        return
     amount = constrain(amount, 1, 10)
     msg = "\n".join([random.choice(sheep_links) for i in range(amount)])
     await ctx.send(msg)

@@ -1,8 +1,10 @@
 
 commands:
 	- download_yt: download a youtube video
+	- mc_skin amount:1
 
 
+- randomly evolve AI picture (pick best image)
 - randomly text someone (or every x hours or every morning)
 - volume when using .play
 - playback speed when using .play
