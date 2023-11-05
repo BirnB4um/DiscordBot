@@ -494,7 +494,6 @@ async def join(ctx):
         await ctx.send("you need to join a voicechannel first")
         return
 
-
     log(f"joining channel {auth_voice.channel.id}")
     
     for vc in bot.voice_clients:
@@ -527,9 +526,7 @@ async def stream(ctx, url=""):
         await ctx.send("please provide a link (.stream https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
         return
     
-    start_time = time.time()
     file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url)
-    duration = int(time.time() - start_time)
     file_name = file_path.split("/")[-1]
     if file_path == "unavailable":
         await ctx.send("video ID is unavailable")
