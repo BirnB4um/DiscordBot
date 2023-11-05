@@ -263,21 +263,25 @@ async def download_audio(ctx, url=""):
         await ctx.send("please provide a link (.download_audio https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
         return
     
-    path = bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url)
-    if path == "unavailable":
+    file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url)
+    file_name = file_path.split("/")[-1]
+    if file_path == "unavailable":
         await ctx.send("video ID is unavailable")
         return
-    elif path == "error":
+    elif file_path == "error":
         await ctx.send("error occured")
         return
     else:
-        try:
-            await ctx.send(file=discord.File(path))
-        except:
-            await ctx.send("file too big :(")
-            return
+        if os.path.isfile(file_path):
+            try:
+                await ctx.send(file_name, file=discord.File(file_path))
+            except:
+                await ctx.send("file too big :(")
+            os.remove(file_path)
+        else:
+            await ctx.send("file not found :(")
+
         
-        os.remove(path)
 
 @bot.command(name='download_video', help=' - download YT video (.download_video [URL])')
 async def download_video(ctx, url=""):
@@ -285,21 +289,23 @@ async def download_video(ctx, url=""):
         await ctx.send("please provide a link (.download_video https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
         return
     
-    path = bot.loop.run_in_executor(None, yt_dl.download_yt_video, url)
-    if path == "unavailable":
+    file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_video, url)
+    file_name = file_path.split("/")[-1]
+    if file_path == "unavailable":
         await ctx.send("video ID is unavailable")
         return
-    elif path == "error":
+    elif file_path == "error":
         await ctx.send("error occured")
         return
     else:
-        try:
-            await ctx.send(file=discord.File(path))
-        except:
-            await ctx.send("file too big :(")
-            return
-        
-        os.remove(path)
+        if os.path.isfile(file_path):
+            try:
+                await ctx.send(file_name, file=discord.File(file_path))
+            except:
+                await ctx.send("file too big :(")
+            os.remove(file_path)
+        else:
+            await ctx.send("file not found :(")
 
 
 @bot.command(name='4chan_link', help=' - get a random link from 4chan (.4chan_link amount:1 category:image)')

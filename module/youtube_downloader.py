@@ -21,5 +21,3 @@ def download_yt_video(url=""):
         return "unavailable"
     except:
         return "error"
-
-download_yt_audio("https://youtu.be/7UubKYqEy3s?si=8H1uxqC28tGgrLVe")
