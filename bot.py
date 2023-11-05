@@ -271,6 +271,9 @@ async def download_audio(ctx, url=""):
     elif file_path == "error":
         await ctx.send("error occured")
         return
+    elif file_path == "too_large":
+        await ctx.send("audio too large :(")
+        return
     else:
         if os.path.isfile(file_path):
             try:
@@ -296,6 +299,9 @@ async def download_video(ctx, url=""):
         return
     elif file_path == "error":
         await ctx.send("error occured")
+        return
+    elif file_path == "too_large":
+        await ctx.send("video too large :(")
         return
     else:
         if os.path.isfile(file_path):
