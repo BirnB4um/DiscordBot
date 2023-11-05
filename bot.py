@@ -257,6 +257,51 @@ async def on_command_error(ctx, error):
 ##### COMMANDS ######
 
 
+@bot.command(name='download_audio', help=' - download audio of a YT video (.download_audio [URL])')
+async def download_audio(ctx, url=""):
+    if url == "":
+        ctx.send("please provide a link (.download_audio https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
+        return
+    
+    path = bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url)
+    if path == "unavailable":
+        ctx.send("video ID is unavailable")
+        return
+    elif path == "error":
+        ctx.send("error occured")
+        return
+    else:
+        try:
+            ctx.send(file=discord.File(path))
+        except:
+            ctx.send("file too big :(")
+            return
+        
+        os.remove(path)
+
+@bot.command(name='download_video', help=' - download YT video (.download_video [URL])')
+async def download_video(ctx, url=""):
+    if url == "":
+        ctx.send("please provide a link (.download_video https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
+        return
+    
+    path = bot.loop.run_in_executor(None, yt_dl.download_yt_video, url)
+    if path == "unavailable":
+        ctx.send("video ID is unavailable")
+        return
+    elif path == "error":
+        ctx.send("error occured")
+        return
+    else:
+        try:
+            ctx.send(file=discord.File(path))
+        except:
+            ctx.send("file too big :(")
+            return
+        
+        os.remove(path)
+
+
 @bot.command(name='4chan_link', help=' - get a random link from 4chan (.4chan_link amount:1 category:image)')
 async def fourchan_link(ctx, *message):
     amount = 1

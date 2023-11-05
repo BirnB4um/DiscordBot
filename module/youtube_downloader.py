@@ -1,34 +1,25 @@
-import youtube_dl
-import time
+from pytube import YouTube
+from pytube.exceptions import VideoUnavailable
 
-download_path = "pathhhh"
-download_duration = 1
-download_error = "no error"
 
-def download_audio(path = "", link="", type="wav"):
-    global download_error, download_duration, download_path
-    
+def download_yt_audio(url=""):
     try:
-        video_info = youtube_dl.YoutubeDL().extract_info(url = link,download=False)
+        yt = YouTube(url)
+        audio_stream = yt.streams.filter(only_audio=True).first()
+        return audio_stream.download(output_path="temp/")
+    except VideoUnavailable:
+        return "unavailable"
     except:
-        download_error = "Error: youtube url is not valid!"
-        return False
+        return "error"
 
-    filename = video_info['title'].replace("/", "").replace("\\", "").replace(" ", "_")
-    filepath = f"{path}{filename}.{type}"
-    download_path = filepath
-    options={
-        'format':'bestaudio/best',
-        'keepvideo':False,
-        'outtmpl':filepath,
-    }
-    start_time = time.time()
+def download_yt_video(url=""):
     try:
-        with youtube_dl.YoutubeDL(options) as ydl:
-            ydl.download([video_info['webpage_url']])
+        yt = YouTube(url)
+        video_stream = yt.streams.get_highest_resolution()
+        return video_stream.download(output_path="temp/")
+    except VideoUnavailable:
+        return "unavailable"
     except:
-        download_error = "Error: Downloading failed!"
-        return False
-    download_duration = time.time() - start_time
+        return "error"
 
-    return True
+download_yt_audio("https://youtu.be/7UubKYqEy3s?si=8H1uxqC28tGgrLVe")
