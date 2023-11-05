@@ -254,6 +254,7 @@ async def on_command_error(ctx, error):
         await ctx.send("that command doesn't exist. Try .help")
     log_error(str(error))
 
+
 ##### COMMANDS ######
 
 
@@ -514,6 +515,54 @@ async def leave(ctx):
         log(f"leave voice channel {vc.channel}")
         await vc.disconnect()
     
+
+@bot.command(name='stream', help=f" - stream a youtube audio in a voicechannel (.stream [youtube url])")
+async def stream(ctx, url=""):
+    if len(bot.voice_clients) == 0:
+        await ctx.send("bot needs to join first (.join)")
+        return
+    voice_client = bot.voice_clients[0]
+
+    if url == "":
+        await ctx.send("please provide a link (.stream https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
+        return
+    
+    start_time = time.time()
+    file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url)
+    duration = int(time.time() - start_time)
+    file_name = file_path.split("/")[-1]
+    if file_path == "unavailable":
+        await ctx.send("video ID is unavailable")
+        return
+    elif file_path == "error":
+        await ctx.send("error occured")
+        return
+    elif file_path == "too_large":
+        await ctx.send("audio too large :(")
+        return
+
+    if os.path.isfile("temp/"+file_name):
+        try:
+            if voice_client.is_playing() or voice_client.is_paused():
+                voice_client.stop()
+
+            options = {
+                'options': '-b:a 4k',
+            }
+            voice_client.play(FFmpegPCMAudio("temp/"+file_name, **options))
+
+            while voice_client.is_playing() or voice_client.is_paused():
+                await asyncio.sleep(0.5)
+
+        except Exception as e:
+            log_error(str(e))
+        finally:
+            voice_client.stop()
+
+        os.remove("temp/"+file_name)
+    else:
+        await ctx.send("file not found :(")
+
 
 @bot.command(name='play', help=f" - play sounds if joined vc first (.play [sound])")
 async def play(ctx, sound=""):
