@@ -263,7 +263,9 @@ async def download_audio(ctx, url=""):
         await ctx.send("please provide a link (.download_audio https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
         return
     
+    start_time = time.time()
     file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url)
+    duration = int(time.time() - start_time)
     file_name = file_path.split("/")[-1]
     if file_path == "unavailable":
         await ctx.send("video ID is unavailable")
@@ -277,7 +279,7 @@ async def download_audio(ctx, url=""):
     else:
         if os.path.isfile(file_path):
             try:
-                await ctx.send(file_name, file=discord.File(file_path))
+                await ctx.send(file_name + f"\nTime taken: {duration} sec", file=discord.File(file_path))
             except:
                 await ctx.send("file too big :(")
             os.remove(file_path)
@@ -292,7 +294,9 @@ async def download_video(ctx, url=""):
         await ctx.send("please provide a link (.download_video https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
         return
     
+    start_time = time.time()
     file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_video, url)
+    duration = int(time.time() - start_time)
     file_name = file_path.split("/")[-1]
     if file_path == "unavailable":
         await ctx.send("video ID is unavailable")
@@ -306,7 +310,7 @@ async def download_video(ctx, url=""):
     else:
         if os.path.isfile(file_path):
             try:
-                await ctx.send(file_name, file=discord.File(file_path))
+                await ctx.send(file_name + f"\nTime taken: {duration} sec", file=discord.File(file_path))
             except:
                 await ctx.send("file too big :(")
             os.remove(file_path)
