@@ -472,6 +472,12 @@ async def get_log(ctx):
 
         if os.path.exists("../server_logs/log.txt"):
             await ctx.send("server_state_log:", file=discord.File("../server_logs/log.txt"))
+
+@bot.command(name='get_status_diagram', help=' - get graph of server-status (.get_status_diagram)')
+async def get_status_diagram(ctx):
+    log("sending status diagram")
+    if ctx.author.id == user_id["thimo"]:
+        if os.path.exists("../server_logs/log.txt"):
             
             with open("../server_logs/log.txt", "r") as file:
                 lines = file.read().splitlines()
@@ -499,7 +505,6 @@ async def get_log(ctx):
             plt.tight_layout()
             plt.savefig("temp/server_state_log.png")
             await ctx.send("server_state_log plot:", file=discord.File("temp/server_state_log.png"))
-            
 
 
 @bot.command(name='clear_log', help=' - clear log files (.clear_log)')
