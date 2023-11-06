@@ -201,11 +201,26 @@ async def on_message(message):
 
 @bot.event
 async def on_presence_update(before, after):
-    # print(f"user update: {after}")
-    pass
+
+    if before.id == bot.user.id:
+        return
+
+    # only for one server
+    if before.guild.id != 819099151429271552:
+        return
+
+    # log presence
+    if before.status != after.status:
+        msg = datetime.now().strftime("%d/%m/%Y %H:%M:%S ") + f"{after.name}:{after.status}"
+        with open("data/presence.txt", "a") as file:
+            file.write(msg + "\n")
 
 @bot.event
 async def on_user_update(before, after):
+    pass
+
+@bot.event
+async def on_member_update(before, after):
     pass
 
 @bot.event
