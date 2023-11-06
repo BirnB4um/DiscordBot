@@ -2,7 +2,7 @@ from pytube import YouTube
 from pytube.exceptions import VideoUnavailable
 import os
 
-MAX_SIZE_MB = 100
+MAX_SIZE_MB = 25
 
 def download_yt_audio(url="", folder="temp/", extension="mp4"):
     try:
