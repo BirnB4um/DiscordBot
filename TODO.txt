@@ -2,7 +2,7 @@
 commands:
 	- mc_skin amount:1
 
-- youtube downloader: try all resolutions and pick best one that is not too big (same for audio)
+- log more information about everything
 - randomly evolve AI picture (pick best image)
 - randomly text someone (or every x hours or every morning)
 - volume when using .play
