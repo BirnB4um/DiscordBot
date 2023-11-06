@@ -7,7 +7,7 @@ MAX_SIZE_MB = 25
 def download_yt_audio(url="", folder="temp/", extension="mp4"):
     try:
         yt = YouTube(url)
-        audio_stream = yt.streams.filter(only_audio=True, mime_type="audio/"+extension).order_by('abr').desc()
+        audio_stream = yt.streams.filter(mime_type="audio/"+extension).order_by('abr').desc()
 
         if len(audio_stream) == 0:
             return "no_stream"
@@ -21,7 +21,7 @@ def download_yt_audio(url="", folder="temp/", extension="mp4"):
         if chosen_stream is None:
             return "too_large"
         
-        path = audio_stream.download(output_path=folder)
+        path = chosen_stream.download(output_path=folder)
         if extension == "mp4":
             base, ext = os.path.splitext(path)
             new_file = base + ".mp3"
