@@ -259,13 +259,18 @@ async def on_command_error(ctx, error):
 
 
 @bot.command(name='download_audio', help=' - download audio of a YT video (.download_audio [URL])')
-async def download_audio(ctx, url=""):
+async def download_audio(ctx, url="", extension="mp4"):
     if url == "":
         await ctx.send("please provide a link (.download_audio https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
         return
     
+    extension = extension.replace(".", "")
+    if extension not in ["mp4", "webm"]:
+        await ctx.send("extension has to be either 'mp4' or 'webm'.\nTry webm extension with .download_audio [URL] webm")
+        return
+    
     start_time = time.time()
-    file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url)
+    file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url, "temp/", extension)
     duration = int(time.time() - start_time)
     file_name = file_path.split("/")[-1]
     if file_path == "unavailable":
@@ -273,6 +278,9 @@ async def download_audio(ctx, url=""):
         return
     elif file_path == "error":
         await ctx.send("error occured")
+        return
+    elif file_path == "no_stream":
+        await ctx.send("no stream found. Try webm extension with .download_audio [URL] webm")
         return
     elif file_path == "too_large":
         await ctx.send("audio too large :(")
@@ -290,13 +298,18 @@ async def download_audio(ctx, url=""):
         
 
 @bot.command(name='download_video', help=' - download YT video (.download_video [URL])')
-async def download_video(ctx, url=""):
+async def download_video(ctx, url="", extension="mp4"):
     if url == "":
         await ctx.send("please provide a link (.download_video https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
         return
     
+    extension = extension.replace(".", "")
+    if extension not in ["mp4", "webm"]:
+        await ctx.send("extension has to be either 'mp4' or 'webm'. \nTry webm extension with .download_video [URL] webm")
+        return
+    
     start_time = time.time()
-    file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_video, url)
+    file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_video, url, "temp/", extension, True)
     duration = int(time.time() - start_time)
     file_name = file_path.split("/")[-1]
     if file_path == "unavailable":
@@ -304,6 +317,9 @@ async def download_video(ctx, url=""):
         return
     elif file_path == "error":
         await ctx.send("error occured")
+        return
+    elif file_path == "no_stream":
+        await ctx.send("no stream found. Try webm extension with .download_video [URL] webm")
         return
     elif file_path == "too_large":
         await ctx.send("video too large :(")
@@ -526,13 +542,16 @@ async def stream(ctx, url=""):
         await ctx.send("please provide a link (.stream https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
         return
     
-    file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url)
+    file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url, "temp/", "mp4")
     file_name = file_path.split("/")[-1]
     if file_path == "unavailable":
         await ctx.send("video ID is unavailable")
         return
     elif file_path == "error":
         await ctx.send("error occured")
+        return
+    elif file_path == "no_stream":
+        await ctx.send("no stream found")
         return
     elif file_path == "too_large":
         await ctx.send("audio too large :(")
