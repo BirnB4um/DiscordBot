@@ -746,17 +746,15 @@ async def thumbnail(ctx, link=""):
         await ctx.send("please provide a link (Bsp: .thumbnail https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
         return
 
-    headers = {'User-Agent': 'Chrome'}
-    try:
-        page = requests.get(link, headers=headers)
-    except:
-        await ctx.send("Error: link invalid")
+    url = yt_dl.get_yt_thumbnail(link)
+    if url == "error":
+        await ctx.send("error occured")
         return
-
-    soup = BeautifulSoup(page.content, "html.parser")
-    thumbnail_image = soup.find("link", {"rel":"image_src"})["href"]
-    log(f"send thumbnail url: {thumbnail_image}")
-    await ctx.send(thumbnail_image)
+    elif url == "unavailable":
+        await ctx.send("video ID is unavailable")
+        return
+    else:
+        await ctx.send(url)
 
 
 
