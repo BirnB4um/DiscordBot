@@ -4,15 +4,6 @@ import os
 
 MAX_SIZE_MB = 25
 
-def get_yt_thumbnail(url=""):
-    try:
-        yt = YouTube(url)
-        return yt.thumbnail_url
-    except VideoUnavailable:
-        return "unavailable"
-    except:
-        return "error"
-
 def download_yt_audio(url="", folder="temp/", extension="mp4"):
     try:
         yt = YouTube(url)
