@@ -167,6 +167,20 @@ async def on_message(message):
             await message.channel.send(output)
         return
 
+    if not is_command and "crazy" in message.content.lower():
+        await message.channel.send("Crazy?")
+        await asyncio.sleep(1)
+        await message.channel.send("I was crazy once.")
+        await asyncio.sleep(1)
+        await message.channel.send("They locked me in a room.")
+        await asyncio.sleep(1)
+        await message.channel.send("A rubber room.")
+        await asyncio.sleep(1)
+        await message.channel.send("A rubber room with rats.")
+        await asyncio.sleep(1)
+        await message.channel.send("And rats make me crazy.")
+        return
+
     #if someone sends dm
     if (message.channel.type == discord.ChannelType.private): 
         user_is_thimo = message.author.id == user_id["thimo"]
