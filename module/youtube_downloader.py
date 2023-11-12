@@ -116,8 +116,3 @@ def download_yt_video(url="", folder="temp/", extension="mp4", include_audio=Tru
     except:
         return "error"
 
-
-
-if __name__ == "__main__":
-    url = "https://www.youtube.com/watch?v=ZRtdQ81jPUQ"
-    print(download_yt_audio(url))
