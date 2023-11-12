@@ -2,6 +2,7 @@
 commands:
 	- mc_skin amount:1
 
+- .stream recommendations based on link (do in infinite loop)
 - log more information about everything
 - randomly evolve AI picture (pick best image)
 - randomly text someone (or every x hours or every morning)

@@ -1,8 +1,16 @@
 from pytube import YouTube
-from pytube.exceptions import VideoUnavailable
+from pytube.exceptions import VideoUnavailable, RegexMatchError
+import googleapiclient.discovery
 import os
+from datetime import datetime
 
+youtube_api = None
 MAX_SIZE_MB = 25
+
+def load_youtube_api():
+    global youtube_api
+    api_key = os.getenv('YOUTUBE_API_KEY')
+    youtube_api = googleapiclient.discovery.build("youtube", "v3", developerKey=api_key)
 
 def get_yt_thumbnail(url=""):
     try:
@@ -12,6 +20,32 @@ def get_yt_thumbnail(url=""):
         return "unavailable"
     except:
         return "error"
+
+
+def get_search_result(query, category_id=10, max_results=1):
+    if youtube_api is None:
+        return None
+    try:
+        search_response = youtube_api.search().list(
+            q=query,
+            type="video",
+            part="id",
+            order="relevance",
+            videoDuration="any",
+            safeSearch="none",
+            maxResults=max_results,
+            videoCategoryId=category_id, # default = 10 (Music)
+        ).execute()
+    except:
+        print("ERROR: Youtube API")
+        return None
+
+    if len(search_response["items"]) == 0:
+        return None
+
+    video_id = search_response["items"][0]["id"]["videoId"]
+    return "https://www.youtube.com/watch?v=" + video_id
+
 
 def download_yt_audio(url="", folder="temp/", extension="mp4"):
     try:
@@ -31,9 +65,12 @@ def download_yt_audio(url="", folder="temp/", extension="mp4"):
             return "too_large"
         
         path = chosen_stream.download(output_path=folder)
+        
         if extension == "mp4":
             base, ext = os.path.splitext(path)
             new_file = base + ".mp3"
+            if os.path.isfile(new_file):
+                os.remove(new_file)
             os.rename(path, new_file)
             path = new_file
 
@@ -41,8 +78,11 @@ def download_yt_audio(url="", folder="temp/", extension="mp4"):
     
     except VideoUnavailable:
         return "unavailable"
+    except RegexMatchError:
+        return "unavailable"
     except:
         return "error"
+
 
 
 def download_yt_video(url="", folder="temp/", extension="mp4", include_audio=True):
@@ -66,9 +106,18 @@ def download_yt_video(url="", folder="temp/", extension="mp4", include_audio=Tru
         if chosen_stream is None:
             return "too_large"
         
-        return chosen_stream.download(output_path=folder)
+        name = "".join([c for c in chosen_stream.default_filename if c.isalpha() or c.isdigit() or c in [" ", "_", "-"]]).rstrip()
+        return chosen_stream.download(output_path=folder, filename=name)
     
     except VideoUnavailable:
         return "unavailable"
+    except RegexMatchError:
+        return "unavailable"
     except:
         return "error"
+
+
+
+if __name__ == "__main__":
+    url = "https://www.youtube.com/watch?v=ZRtdQ81jPUQ"
+    print(download_yt_audio(url))

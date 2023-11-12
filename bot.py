@@ -1,4 +1,5 @@
 import os
+import re
 from dotenv import load_dotenv
 import time
 from datetime import datetime
@@ -26,11 +27,12 @@ from module.chatbot import DiscordChatbot, FourchanChatbot
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+yt_dl.load_youtube_api()
 intents = discord.Intents.all()
 intents.members = True
 bot = commands.Bot(command_prefix='.', intents=intents)
 restart_delay = 0
-
+link_pattern = re.compile(r'https?://\S+', re.IGNORECASE)
 
 
 def log(text, print_to_console=False):
@@ -564,16 +566,29 @@ async def leave(ctx):
         await vc.disconnect()
     
 
-@bot.command(name='stream', help=f" - stream a youtube audio in a voicechannel (.stream [youtube url])")
-async def stream(ctx, url=""):
+@bot.command(name='stream', help=f" - stream youtube audio in a voicechannel (.stream [youtube url OR search term])")
+async def stream(ctx, *msg):
+    msg = " ".join(msg)
+
     if len(bot.voice_clients) == 0:
         await ctx.send("bot needs to join first (.join)")
         return
     voice_client = bot.voice_clients[0]
 
-    if url == "":
-        await ctx.send("please provide a link (.stream https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
+    if msg == "":
+        await ctx.send("please provide a link or a search term (.stream https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
         return
+
+    #check if url or search term
+    if bool(re.match(link_pattern, msg)):
+        url = msg
+    else:
+        url = yt_dl.get_search_result(msg)
+        if url == None:
+            await ctx.send("no video found")
+            return
+        await ctx.send("streaming video: " + url)
+
     
     file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url, "temp/", "mp4")
     file_name = file_path.split("/")[-1]
@@ -598,7 +613,8 @@ async def stream(ctx, url=""):
             options = {
                 'options': '-b:a 4k',
             }
-            voice_client.play(FFmpegPCMAudio("temp/"+file_name, **options))
+            ffmpeg_streamer = FFmpegPCMAudio("temp/"+file_name, **options)
+            voice_client.play(ffmpeg_streamer)
 
             while voice_client.is_playing() or voice_client.is_paused():
                 await asyncio.sleep(0.5)
@@ -607,6 +623,8 @@ async def stream(ctx, url=""):
             log_error(str(e))
         finally:
             voice_client.stop()
+            ffmpeg_streamer.cleanup()
+            
 
         os.remove("temp/"+file_name)
     else:
@@ -631,7 +649,8 @@ async def play(ctx, sound=""):
             options = {
                 'options': '-b:a 4k',
             }
-            voice_client.play(FFmpegPCMAudio(sound_files[sound], **options))
+            ffmpeg_streamer = FFmpegPCMAudio(sound_files[sound], **options)
+            voice_client.play(ffmpeg_streamer)
 
             while voice_client.is_playing() or voice_client.is_paused():
                 await asyncio.sleep(0.5)
@@ -640,6 +659,7 @@ async def play(ctx, sound=""):
             log_error(str(e))
         finally:
             voice_client.stop()
+            ffmpeg_streamer.cleanup()
 
     else:
         await ctx.send(f"sound {sound} not in list. try one of these:\n"+ "\n".join(f"-{sound}" for sound in list(sound_files.keys())))
