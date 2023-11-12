@@ -84,7 +84,6 @@ def download_yt_audio(url="", folder="temp/", extension="mp4"):
         return "error"
 
 
-
 def download_yt_video(url="", folder="temp/", extension="mp4", include_audio=True):
     try:
         yt = YouTube(url)
@@ -106,8 +105,7 @@ def download_yt_video(url="", folder="temp/", extension="mp4", include_audio=Tru
         if chosen_stream is None:
             return "too_large"
         
-        name = "".join([c for c in chosen_stream.default_filename if c.isalpha() or c.isdigit() or c in [" ", "_", "-"]]).rstrip()
-        return chosen_stream.download(output_path=folder, filename=name)
+        return chosen_stream.download(output_path=folder)
     
     except VideoUnavailable:
         return "unavailable"
