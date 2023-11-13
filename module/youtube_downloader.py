@@ -34,6 +34,7 @@ def get_search_result(query, category_id=10, max_results=1):
             videoDuration="any",
             safeSearch="none",
             maxResults=max_results,
+            eventType="completed",
             videoCategoryId=category_id, # default = 10 (Music)
         ).execute()
     except:
