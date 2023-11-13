@@ -590,7 +590,7 @@ async def stream(ctx, *msg):
         await ctx.send("streaming video: " + url)
 
     
-    file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url, "temp/", "mp4", 100)
+    file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url, "temp/", "mp4", 50)
     file_name = file_path.split("/")[-1]
     if file_path == "unavailable":
         await ctx.send("video ID is unavailable")

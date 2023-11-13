@@ -31,7 +31,7 @@ def get_search_result(query, category_id=10, max_results=1):
             type="video",
             part="id",
             order="relevance",
-            videoDuration="any",
+            videoDuration="short",
             safeSearch="none",
             maxResults=max_results,
             eventType="completed",
