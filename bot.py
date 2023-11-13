@@ -668,7 +668,7 @@ async def play(ctx, sound=""):
                 voice_client.stop()
 
             options = {
-                'options': '-b:a 4k',
+                'options': '-b:a 32k',
             }
             ffmpeg_streamer = FFmpegPCMAudio(sound_files[sound], **options)
             voice_client.play(ffmpeg_streamer)
