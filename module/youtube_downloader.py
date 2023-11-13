@@ -1,6 +1,7 @@
 from pytube import YouTube
 from pytube.exceptions import VideoUnavailable, RegexMatchError, AgeRestrictedError
 import googleapiclient.discovery
+from googleapiclient.errors import HttpError
 import os
 from datetime import datetime
 
@@ -52,8 +53,15 @@ def get_search_result(query, category_id=10, max_results=50):
             maxResults=max_results,
             videoCategoryId=category_id, # default = 10 (Music)
         ).execute()
-    except:
-        print("ERROR: Youtube API")
+    except HttpError as e:
+        error_message = e.content.decode('utf-8')
+        if 'quotaExceeded' in error_message:
+            print("ERROR: Youtube API Quota exceeded.")
+        else:
+            print(f"ERROR: An HTTP error occurred: {error_message}")
+        return None
+    except Exception as e:
+        print("ERROR: Youtube API", e)
         return None
 
     if len(search_response["items"]) == 0:

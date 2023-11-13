@@ -591,7 +591,7 @@ async def stream(ctx, *msg):
     else:
         videos = yt_dl.get_search_result(msg)
         if videos == None:
-            await ctx.send("no video found")
+            await ctx.send("no video found or quota exceeded")
             return
 
         #get video
