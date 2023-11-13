@@ -48,7 +48,7 @@ def get_search_result(query, category_id=10, max_results=1):
     return "https://www.youtube.com/watch?v=" + video_id
 
 
-def download_yt_audio(url="", folder="temp/", extension="mp4"):
+def download_yt_audio(url="", folder="temp/", extension="mp4", size_limit=MAX_SIZE_MB):
     try:
         yt = YouTube(url)
         audio_stream = yt.streams.filter(mime_type="audio/"+extension).order_by('abr').desc()
@@ -58,7 +58,7 @@ def download_yt_audio(url="", folder="temp/", extension="mp4"):
 
         chosen_stream = None
         for stream in audio_stream:
-            if stream.filesize_mb < MAX_SIZE_MB:
+            if stream.filesize_mb < size_limit:
                 chosen_stream = stream
                 break
 
@@ -85,7 +85,7 @@ def download_yt_audio(url="", folder="temp/", extension="mp4"):
         return "error"
 
 
-def download_yt_video(url="", folder="temp/", extension="mp4", include_audio=True):
+def download_yt_video(url="", folder="temp/", extension="mp4", include_audio=True, size_limit=MAX_SIZE_MB):
     try:
         yt = YouTube(url)
         video_stream = yt.streams.filter(mime_type="video/"+extension).order_by('resolution').desc()
@@ -96,7 +96,7 @@ def download_yt_video(url="", folder="temp/", extension="mp4", include_audio=Tru
             if stream.includes_audio_track != include_audio:
                 continue
             streams_exist = True
-            if stream.filesize_mb < MAX_SIZE_MB:
+            if stream.filesize_mb < size_limit:
                 chosen_stream = stream
                 break
 
