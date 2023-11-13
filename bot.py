@@ -315,6 +315,9 @@ async def download_audio(ctx, url="", extension="mp4"):
     elif file_path == "too_large":
         await ctx.send("audio too large :(")
         return
+    elif file_path == "age_restricted":
+        await ctx.send("video is age restricted")
+        return
     else:
         if os.path.isfile(file_path):
             try:
@@ -353,6 +356,9 @@ async def download_video(ctx, url="", extension="mp4"):
         return
     elif file_path == "too_large":
         await ctx.send("video too large :(")
+        return
+    elif file_path == "age_restricted":
+        await ctx.send("video is age restricted")
         return
     else:
         if os.path.isfile(file_path):
@@ -596,7 +602,7 @@ async def stream(ctx, *msg):
                 break
 
         if url == "":
-            await ctx.send("no video found")
+            await ctx.send("no matching video found")
             return
 
         await ctx.send("streaming video: " + url)
@@ -616,6 +622,9 @@ async def stream(ctx, *msg):
     elif file_path == "too_large":
         await ctx.send("audio too large :(")
         return
+    elif file_path == "age_restricted":
+        await ctx.send("video is age restricted")
+        return
 
     if os.path.isfile("temp/"+file_name):
         try:
@@ -623,7 +632,7 @@ async def stream(ctx, *msg):
                 voice_client.stop()
 
             options = {
-                'options': '-b:a 4k',
+                'options': '-b:a 32k',
             }
             ffmpeg_streamer = FFmpegPCMAudio("temp/"+file_name, **options)
             voice_client.play(ffmpeg_streamer)

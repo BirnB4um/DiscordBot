@@ -1,5 +1,5 @@
 from pytube import YouTube
-from pytube.exceptions import VideoUnavailable, RegexMatchError
+from pytube.exceptions import VideoUnavailable, RegexMatchError, AgeRestrictedError
 import googleapiclient.discovery
 import os
 from datetime import datetime
@@ -27,6 +27,12 @@ def check_video(url, max_duration=60*10):
         yt = YouTube(url)
         if yt.length > max_duration:
             return False
+        
+        try:
+            yt.streams
+        except:
+            return False
+
         return True
     except:
         return False
@@ -86,6 +92,8 @@ def download_yt_audio(url="", folder="temp/", extension="mp4", size_limit=MAX_SI
 
         return path
     
+    except AgeRestrictedError:
+        return "age_restricted"
     except VideoUnavailable:
         return "unavailable"
     except RegexMatchError:
@@ -117,10 +125,11 @@ def download_yt_video(url="", folder="temp/", extension="mp4", include_audio=Tru
         
         return chosen_stream.download(output_path=folder)
     
+    except AgeRestrictedError:
+        return "age_restricted"
     except VideoUnavailable:
         return "unavailable"
     except RegexMatchError:
         return "unavailable"
     except:
         return "error"
-
