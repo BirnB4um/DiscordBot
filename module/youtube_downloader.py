@@ -22,19 +22,28 @@ def get_yt_thumbnail(url=""):
         return "error"
 
 
-def get_search_result(query, category_id=10, max_results=1):
+def check_video(url, max_duration=60*10):
+    try:
+        yt = YouTube(url)
+        if yt.length > max_duration:
+            return False
+        return True
+    except:
+        return False
+    
+
+def get_search_result(query, category_id=10, max_results=50):
     if youtube_api is None:
         return None
     try:
         search_response = youtube_api.search().list(
             q=query,
             type="video",
-            part="id",
+            part="id,snippet",
             order="relevance",
-            videoDuration="short",
+            videoDuration="any",
             safeSearch="none",
             maxResults=max_results,
-            eventType="completed",
             videoCategoryId=category_id, # default = 10 (Music)
         ).execute()
     except:
@@ -44,8 +53,8 @@ def get_search_result(query, category_id=10, max_results=1):
     if len(search_response["items"]) == 0:
         return None
 
-    video_id = search_response["items"][0]["id"]["videoId"]
-    return "https://www.youtube.com/watch?v=" + video_id
+    video_ids = ["https://www.youtube.com/watch?v=" + id["id"]["videoId"] for id in search_response["items"] if id["snippet"]["liveBroadcastContent"] == "none"]
+    return video_ids
 
 
 def download_yt_audio(url="", folder="temp/", extension="mp4", size_limit=MAX_SIZE_MB):

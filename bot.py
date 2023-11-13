@@ -583,10 +583,22 @@ async def stream(ctx, *msg):
     if bool(re.match(link_pattern, msg)):
         url = msg
     else:
-        url = yt_dl.get_search_result(msg)
-        if url == None:
+        videos = yt_dl.get_search_result(msg)
+        if videos == None:
             await ctx.send("no video found")
             return
+
+        #get video
+        url = ""
+        for vid in videos:
+            if yt_dl.check_video(vid):
+                url = vid
+                break
+
+        if url == "":
+            await ctx.send("no video found")
+            return
+
         await ctx.send("streaming video: " + url)
 
     
