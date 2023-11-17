@@ -56,6 +56,7 @@ discord_chatbot = DiscordChatbot()
 fourchan_chatbot = FourchanChatbot()
 chatbot_mode = "discord"
 chatbot = discord_chatbot
+discord_chatbot_name = "furby"
 
 #witze list
 witze_list = []
@@ -173,7 +174,7 @@ async def on_message(message):
     #if in furby channel
     if message.channel.id == 1166426231445655653 and not is_command:
         if chatbot_mode == "discord":
-            input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}furby:{chatbot.TOKENS['start_of_message']}"
+            input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}{discord_chatbot_name}:{chatbot.TOKENS['start_of_message']}"
         elif chatbot_mode == "4chan":
             input = f"{message.content}{chatbot.TOKENS['seperator']}"
 
@@ -193,7 +194,7 @@ async def on_message(message):
         #send to chatbot
         if not is_command:
             if chatbot_mode == "discord":
-                input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}furby:{chatbot.TOKENS['start_of_message']}"
+                input = f"{message.author.name}:{chatbot.TOKENS['start_of_message']}{message.content}{chatbot.TOKENS['end_of_message']}{discord_chatbot_name}:{chatbot.TOKENS['start_of_message']}"
             elif chatbot_mode == "4chan":
                 input = f"{message.content}{chatbot.TOKENS['seperator']}"
 
@@ -288,6 +289,17 @@ async def on_command_error(ctx, error):
 ##### COMMANDS ######
 
 
+@bot.command(name='set_discord_chatbot_name', help=' - set name of the discord chatbot (default: furby) (.set_discord_chatbot_name [name])')
+async def set_discord_chatbot_name(ctx, *name):
+    name = " ".join(name)
+    if name == "":
+        await ctx.send("please provide a name (.set_discord_chatbot_name furby)")
+        return
+    
+    global discord_chatbot_name
+    discord_chatbot_name = name
+    await ctx.send(f"discord chatbot name set to: {discord_chatbot_name}")
+    
 @bot.command(name='download_audio', help=' - download audio of a YT video (.download_audio [URL])')
 async def download_audio(ctx, url="", extension="mp4"):
     if url == "":
