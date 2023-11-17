@@ -24,7 +24,7 @@ class DiscordChatbot:
         self.emb_dim = 512
         self.hidden_size = 512
         self.num_layers = 3
-        self.temperature = 0.5
+        self.temperature = 0.6
 
 
         self.chatbot = ort.InferenceSession("data/discord_chatbot_model.onnx")
@@ -138,7 +138,7 @@ class DiscordChatbot:
 
 
             generated_message = self.tokenizer.decode(output_list)
-            generated_message = generated_message.replace(self.TOKENS["start_of_message"], ": ")
+            generated_message = generated_message.replace(self.TOKENS["start_of_message"], "")
             generated_message = generated_message.replace(self.TOKENS["end_of_message"], "\n")
 
         except Exception as e:
