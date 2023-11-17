@@ -54,8 +54,8 @@ def get_search_result(query, category_id=10, max_results=50):
             videoCategoryId=category_id, # default = 10 (Music)
         ).execute()
     except HttpError as e:
-        error_message = e.content.decode('utf-8')
-        if 'quotaExceeded' in error_message:
+        error_message = e.content.decode("utf-8")
+        if "quotaExceeded" in error_message:
             print("ERROR: Youtube API Quota exceeded.")
         else:
             print(f"ERROR: An HTTP error occurred: {error_message}")
@@ -74,7 +74,7 @@ def get_search_result(query, category_id=10, max_results=50):
 def download_yt_audio(url="", folder="temp/", extension="mp4", size_limit=MAX_SIZE_MB):
     try:
         yt = YouTube(url)
-        audio_stream = yt.streams.filter(mime_type="audio/"+extension).order_by('abr').desc()
+        audio_stream = yt.streams.filter(mime_type="audio/"+extension).order_by("abr").desc()
 
         if len(audio_stream) == 0:
             return "no_stream"

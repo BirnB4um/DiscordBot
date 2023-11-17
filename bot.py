@@ -398,15 +398,15 @@ async def fourchan_link(ctx, *message):
         await ctx.send("\n".join(random.sample(fourchan_links[category], amount)))
 
 
-@bot.command(name='generate_4chan', help=' - generate a 4chan conversation (.generate_4chan [number_of_messages])')
-async def generate_4chan(ctx, number_of_messages="500"):
+@bot.command(name='generate_4chan', help=' - generate a 4chan conversation (.generate_4chan [number_of_tokens])')
+async def generate_4chan(ctx, number_of_tokens="500"):
 
     try:
-        number_of_messages = int(number_of_messages)
+        number_of_tokens = int(number_of_tokens)
     except:
-        await ctx.send("number_of_messages has to be an integer")
+        await ctx.send("number_of_tokens has to be an integer")
         return
-    number_of_messages = constrain(number_of_messages, 1, 1000)
+    number_of_tokens = constrain(number_of_tokens, 1, 1000)
     
     if chatbot.check_if_running():
         await ctx.send("chatbot is already running! try again later.")
@@ -415,11 +415,36 @@ async def generate_4chan(ctx, number_of_messages="500"):
         temp_cell = fourchan_chatbot.cell_state
         fourchan_chatbot.reset_hidden()
 
-        output = await bot.loop.run_in_executor(None, fourchan_chatbot.run_continuous, number_of_messages)
+        output = await bot.loop.run_in_executor(None, fourchan_chatbot.run_continuous, number_of_tokens)
         output = "```" + "```\n```".join(output.split(fourchan_chatbot.TOKENS["seperator"])) + "```"
 
         fourchan_chatbot.hidden_state = temp_hidden
         fourchan_chatbot.cell_state = temp_cell
+
+        await ctx.send(output)
+
+
+@bot.command(name='generate_discord', help=' - generate a discord conversation (.generate_discord [number_of_tokens])')
+async def generate_discord(ctx, number_of_tokens="500"):
+
+    try:
+        number_of_tokens = int(number_of_tokens)
+    except:
+        await ctx.send("number_of_tokens has to be an integer")
+        return
+    number_of_tokens = constrain(number_of_tokens, 1, 1000)
+    
+    if chatbot.check_if_running():
+        await ctx.send("chatbot is already running! try again later.")
+    else:
+        temp_hidden = discord_chatbot.hidden_state
+        temp_cell = discord_chatbot.cell_state
+        discord_chatbot.reset_hidden()
+
+        output = await bot.loop.run_in_executor(None, discord_chatbot.run_continuous, number_of_tokens)
+
+        discord_chatbot.hidden_state = temp_hidden
+        discord_chatbot.cell_state = temp_cell
 
         await ctx.send(output)
 
