@@ -128,8 +128,8 @@ def get_search_result(query, category_id=10, max_results=50):
             videoCategoryId=category_id, # default = 10 (Music)
         ).execute()
     except HttpError as e:
-        error_message = e.content.decode('utf-8')
-        if 'quotaExceeded' in error_message:
+        error_message = e.content.decode("utf-8")
+        if "quotaExceeded" in error_message:
             print("ERROR: Youtube API Quota exceeded.")
         else:
             print(f"ERROR: An HTTP error occurred: {error_message}")
