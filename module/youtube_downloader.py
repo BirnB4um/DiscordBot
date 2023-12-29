@@ -1,10 +1,15 @@
-from pytube import YouTube
+from pytube import YouTube, innertube
 from pytube.exceptions import VideoUnavailable, RegexMatchError, AgeRestrictedError
 import googleapiclient.discovery
 from googleapiclient.errors import HttpError
 import os
 from datetime import datetime
+import time
 
+it = innertube.InnerTube(use_oauth=True)
+use_oauth = True
+token_start_time = 0
+token_response = None
 youtube_api = None
 MAX_SIZE_MB = 25
 
@@ -13,11 +18,80 @@ def load_youtube_api():
     api_key = os.getenv('YOUTUBE_API_KEY')
     youtube_api = googleapiclient.discovery.build("youtube", "v3", developerKey=api_key)
 
+
+def get_token_refresh_url():
+    global it, token_start_time, token_response
+    it = innertube.InnerTube(use_oauth=True)
+    token_start_time = int(time.time() - 30)
+    data = {
+        'client_id': innertube._client_id,
+        'scope': 'https://www.googleapis.com/auth/youtube'
+    }
+    response = innertube.request._execute_request(
+        'https://oauth2.googleapis.com/device/code',
+        'POST',
+        headers={
+            'Content-Type': 'application/json'
+        },
+        data=data
+    )
+    token_response = innertube.json.loads(response.read())
+    verification_url = token_response['verification_url']
+    user_code = token_response['user_code']
+    return verification_url, user_code
+
+
+def refresh_token():
+    global it
+    data = {
+        'client_id': innertube._client_id,
+        'client_secret': innertube._client_secret,
+        'device_code': token_response['device_code'],
+        'grant_type': 'urn:ietf:params:oauth:grant-type:device_code'
+    }
+    response = innertube.request._execute_request(
+        'https://oauth2.googleapis.com/token',
+        'POST',
+        headers={
+            'Content-Type': 'application/json'
+        },
+        data=data
+    )
+    response_data = innertube.json.loads(response.read())
+
+    it.access_token = response_data['access_token']
+    it.refresh_token = response_data['refresh_token']
+    it.expires = token_start_time + response_data['expires_in']
+    it.cache_tokens()
+
+
+def token_expired():
+    global use_oauth
+    _it = innertube.InnerTube(use_oauth=True)
+    if _it.expires == None:
+        use_oauth = False
+        return True
+    if time.time() > _it.expires:
+        use_oauth = False
+        return True
+    use_oauth = True
+    return False
+
+
+def get_token_expiration():
+    _it = innertube.InnerTube(use_oauth=True)
+    return _it.expires
+
+
 def get_yt_thumbnail(url=""):
     try:
-        yt = YouTube(url)
+        yt = YouTube(url, use_oauth=use_oauth and not token_expired())
         return yt.thumbnail_url.split("?")[0]
+    except AgeRestrictedError:
+        return "age_restricted"
     except VideoUnavailable:
+        return "unavailable"
+    except RegexMatchError:
         return "unavailable"
     except:
         return "error"
@@ -25,10 +99,10 @@ def get_yt_thumbnail(url=""):
 
 def check_video(url, max_duration=60*10):
     try:
-        yt = YouTube(url)
+        yt = YouTube(url, use_oauth=use_oauth and not token_expired())
         if yt.length > max_duration:
             return False
-        
+
         try:
             yt.streams
         except:
@@ -37,7 +111,7 @@ def check_video(url, max_duration=60*10):
         return True
     except:
         return False
-    
+
 
 def get_search_result(query, category_id=10, max_results=50):
     if youtube_api is None:
@@ -73,7 +147,8 @@ def get_search_result(query, category_id=10, max_results=50):
 
 def download_yt_audio(url="", folder="temp/", extension="mp4", size_limit=MAX_SIZE_MB):
     try:
-        yt = YouTube(url)
+        yt = YouTube(url, use_oauth=use_oauth and not token_expired())
+
         audio_stream = yt.streams.filter(mime_type="audio/"+extension).order_by('abr').desc()
 
         if len(audio_stream) == 0:
@@ -112,7 +187,7 @@ def download_yt_audio(url="", folder="temp/", extension="mp4", size_limit=MAX_SI
 
 def download_yt_video(url="", folder="temp/", extension="mp4", include_audio=True, size_limit=MAX_SIZE_MB):
     try:
-        yt = YouTube(url)
+        yt = YouTube(url, use_oauth=use_oauth and not token_expired())
         video_stream = yt.streams.filter(mime_type="video/"+extension).order_by('resolution').desc()
 
         chosen_stream = None

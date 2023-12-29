@@ -286,9 +286,33 @@ async def on_command_error(ctx, error):
 
 
 ##### COMMANDS ######
+    
 
+@bot.command(name='yt_token', help=' - get login page for new token (.yt_token [exp/get/ref])')
+async def yt_token(ctx, mode="none"):
+    if ctx.author.id == user_id["thimo"]:
+        if mode.lower() == "exp":
+            ts = yt_dl.get_token_expiration()
+            if ts == None:
+                await ctx.send("no token available")
+            else:
+                await ctx.send(f"token expires at {datetime.fromtimestamp(ts)}")
+        elif mode.lower() == "get":
+            try:
+                url, code = yt_dl.get_token_refresh_url()
+                await ctx.send(f"Open {url} and enter {code}\nThen type '.yt_token ref' to refresh token")
+            except:
+                await ctx.send("error occured")
+        elif mode.lower() == "ref":
+            try:
+                yt_dl.refresh_token()
+                await ctx.send("token refreshed!")
+            except:
+                await ctx.send("error occured")
+        else:
+            await ctx.send("mode has to be either 'exp' for token expiration date or 'get' for getting a new token")
 
-@bot.command(name='download_audio', help=' - download audio of a YT video (.download_audio [URL])')
+@bot.command(name='download_audio', help=' - download audio of a YT video (.download_audio [URL] [mp4/webm])')
 async def download_audio(ctx, url="", extension="mp4"):
     if url == "":
         await ctx.send("please provide a link (.download_audio https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
@@ -809,6 +833,9 @@ async def thumbnail(ctx, link=""):
         return
     elif url == "unavailable":
         await ctx.send("video ID is unavailable")
+        return
+    elif url == "age_restricted":
+        await ctx.send("video is age restricted")
         return
     else:
         await ctx.send(url)
