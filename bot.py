@@ -114,6 +114,8 @@ sound_files = {
     "nutella":"sounds/nutella.wav",
     "korn":"sounds/Korn.mp3",
     "grünen":"sounds/die_gruenen.mp3",
+    "missile": "sounds/missile.mp3",
+    "alarm": "sounds/alarm.mp3",
     }
 
 #=======================
