@@ -116,6 +116,7 @@ sound_files = {
     "grünen":"sounds/die_gruenen.mp3",
     "missile": "sounds/missile.mp3",
     "alarm": "sounds/alarm.mp3",
+    "creeper": "sounds/creeper.mp3"
     }
 
 #=======================
