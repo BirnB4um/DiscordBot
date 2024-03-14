@@ -8,7 +8,8 @@ def log(text):
 
 
 log("launching bot...")
-process = subprocess.Popen(["python", "bot.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+process = subprocess.Popen(["python3", "bot.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+log("bot launched!")
 
 for line in process.stdout:
     with open("data/launcher_log.txt", "a") as logfile:
