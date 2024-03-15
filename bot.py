@@ -1044,6 +1044,42 @@ async def restart(ctx, delay="0"):
     await bot.close()
 
 
+{
+  "ip": "77.23.242.9",
+  "hostname": "ip4d17f209.dynamic.kabel-deutschland.de",
+  "city": "Kempten (Allgäu)",
+  "region": "Bavaria",
+  "country": "DE",
+  "loc": "47.7267,10.3139",
+  "org": "AS31334 Vodafone Deutschland GmbH",
+  "postal": "87435",
+  "timezone": "Europe/Berlin",
+  "readme": "https://ipinfo.io/missingauth"
+}
+
+@bot.command(name='ip', help=' - get ip info')
+async def ip(ctx):
+    r = requests.get('https://ipinfo.io/json')
+    if r.status_code == 200:
+        data = r.json()
+        try:
+            msg = f"**IP**: {data['ip']}\n"
+            msg += f"**City**: {data['city']}\n"
+            msg += f"**Region**: {data['region']}\n"
+            msg += f"**Country**: {data['country']}\n"
+            msg += f"**Location**: {data['loc']}\n"
+            msg += f"**Hostname**: {data['hostname']}\n"
+            msg += f"**Org**: {data['org']}\n"
+            msg += f"**Postal**: {data['postal']}\n"
+            msg += f"**Timezone**: {data['timezone']}"
+            await ctx.send(msg)
+        except Exception as e:
+            log_error(f"error when getting ip info. {e}")
+            await ctx.send(f"error occured. Error: {e}")
+    else:
+        await ctx.send(f"error occured. status code: {r.status_code}")
+
+
 
 # run bot
 log("starting bot")
