@@ -3,7 +3,9 @@ import discord
 from discord.ext import commands
 import os
 
-def send_notification(message, file_path=None):
+def send_notification(message:str, file_path=None):
+    message = message[-2000:]
+
     if file_path and not os.path.exists(file_path):
         file_path = None
 
