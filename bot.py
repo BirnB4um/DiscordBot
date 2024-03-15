@@ -1080,6 +1080,22 @@ async def ip(ctx):
         await ctx.send(f"error occured. status code: {r.status_code}")
 
 
+@bot.command(name='set_vpn_pw', help=' - set vpn password')
+async def ip(ctx, password=""):
+    if password == "":
+        await ctx.send("please provide a password")
+        return
+    
+    prev_data = []
+    with open("../BloomSMP/login.txt", "r") as file:
+        prev_data = file.read().splitlines()
+
+    with open("../BloomSMP/login.txt", "w") as file:
+        file.write(prev_data[0] + "\n" + password)
+        
+    await ctx.send("password set")
+
+
 
 # run bot
 log("starting bot")
