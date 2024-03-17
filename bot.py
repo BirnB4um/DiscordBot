@@ -1043,22 +1043,11 @@ async def restart(ctx, delay="0"):
         await ctx.send("restarting...")
     await bot.close()
 
-
-{
-  "ip": "77.23.242.9",
-  "hostname": "ip4d17f209.dynamic.kabel-deutschland.de",
-  "city": "Kempten (Allgäu)",
-  "region": "Bavaria",
-  "country": "DE",
-  "loc": "47.7267,10.3139",
-  "org": "AS31334 Vodafone Deutschland GmbH",
-  "postal": "87435",
-  "timezone": "Europe/Berlin",
-  "readme": "https://ipinfo.io/missingauth"
-}
-
 @bot.command(name='ip', help=' - get ip info')
 async def ip(ctx):
+    if ctx.author.id != user_id["thimo"]:
+        return
+    
     r = requests.get('https://ipinfo.io/json')
     if r.status_code == 200:
         data = r.json()
@@ -1082,6 +1071,9 @@ async def ip(ctx):
 
 @bot.command(name='set_vpn_pw', help=' - set vpn password')
 async def ip(ctx, password=""):
+    if ctx.author.id != user_id["thimo"]:
+        return
+
     if password == "":
         await ctx.send("please provide a password")
         return
