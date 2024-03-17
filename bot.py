@@ -54,8 +54,8 @@ def constrain(x, minX, maxX):
 
 discord_chatbot = DiscordChatbot()
 fourchan_chatbot = FourchanChatbot()
-chatbot_mode = "discord"
-chatbot = discord_chatbot
+chatbot_mode = "4chan"
+chatbot = fourchan_chatbot
 discord_chatbot_name = "furby"
 
 #witze list
