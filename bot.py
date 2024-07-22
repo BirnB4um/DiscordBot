@@ -1183,7 +1183,6 @@ async def stream_4chan(ctx, count="1", verbose="yes"):
         
         await asyncio.sleep(5)
     
-    print("ENDE 4chan stream")
     
 
 
