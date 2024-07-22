@@ -33,6 +33,7 @@ intents.members = True
 bot = commands.Bot(command_prefix='.', intents=intents)
 restart_delay = 0
 link_pattern = re.compile(r'https?://\S+', re.IGNORECASE)
+yt_vid_url = re.compile(r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=)?([a-zA-Z0-9_-]{11})', re.IGNORECASE)
 
 
 def log(text, print_to_console=False):
@@ -129,6 +130,10 @@ async def on_ready():
     log("Bot is ready!")
     user = await bot.fetch_user(user_id["thimo"])
     await user.send("Bot Ready!")
+
+    # clear temp folder
+    for file in os.listdir("temp/"):
+        os.remove("temp/"+file)
 
 
 @bot.event
@@ -1085,6 +1090,101 @@ async def ip(ctx, password=""):
         
     await ctx.send("password set")
 
+
+@bot.command(name='stream_4chan', help=f" - stream youtube videos from 4chan in a voicechannel (.stream_4chan [amount] [verbose=yes/no])")
+async def stream_4chan(ctx, count="1", verbose="yes"):
+
+    if verbose.lower() == "yes":
+        verbose = True
+    elif verbose.lower() == "no":
+        verbose = False
+    else:
+        await ctx.send("verbose has to be either 'yes' or 'no'")
+        return
+
+    if len(bot.voice_clients) == 0:
+        await ctx.send("bot needs to join first (.join)")
+        return
+    voice_client = bot.voice_clients[0]
+
+    try:
+        count = int(count)
+    except:
+        await ctx.send("amount should be an integer.")
+        return
+
+    if count < 0:
+        count = 100
+
+    count = constrain(count, 1, 100)
+
+    for vid_i in range(count):
+
+        while True:
+            video_url = random.choice(fourchan_links["youtube"])
+            if bool(re.match(yt_vid_url, video_url)):
+                break
+        
+        if len(bot.voice_clients) == 0:
+            return
+        voice_client = bot.voice_clients[0]
+
+        file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, video_url, "temp/", "mp4", 50)
+        file_name = file_path.split("/")[-1]
+        if file_path == "unavailable":
+            if verbose:
+                await ctx.send("video ID is unavailable")
+            continue
+        elif file_path == "error":
+            if verbose:
+                await ctx.send("error occured")
+            continue
+        elif file_path == "no_stream":
+            if verbose:
+                await ctx.send("no stream found")
+            continue
+        elif file_path == "too_large":
+            if verbose:
+                await ctx.send("audio too large :(")
+            continue
+        elif file_path == "age_restricted":
+            if verbose:
+                await ctx.send("video is age restricted")
+            continue
+
+        if verbose:
+            await ctx.send(f"streaming video: {video_url}")
+
+        if os.path.isfile("temp/"+file_name):
+            try:
+                if voice_client.is_playing() or voice_client.is_paused():
+                    voice_client.stop()
+
+                options = {
+                    'options': '-b:a 32k',
+                }
+                ffmpeg_streamer = FFmpegPCMAudio("temp/"+file_name, **options)
+                voice_client.play(ffmpeg_streamer)
+
+                while voice_client.is_playing() or voice_client.is_paused():
+                    await asyncio.sleep(0.5)
+
+            except Exception as e:
+                log_error(str(e))
+            finally:
+                voice_client.stop()
+                ffmpeg_streamer.cleanup()
+                
+
+            os.remove("temp/"+file_name)
+        else:
+            if verbose:
+                await ctx.send("file not found :(")
+        
+        await asyncio.sleep(5)
+    
+    print("ENDE 4chan stream")
+    
 
 
 # run bot
