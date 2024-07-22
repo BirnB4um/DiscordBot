@@ -1137,7 +1137,7 @@ async def stream_4chan(ctx, count="1", verbose="yes"):
             continue
         elif file_path == "error":
             if verbose:
-                await ctx.send("error occured")
+                await ctx.send(f"error occured: {video_url}")
             continue
         elif file_path == "no_stream":
             if verbose:
