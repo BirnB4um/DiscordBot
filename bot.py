@@ -1057,8 +1057,6 @@ async def ip(ctx):
             msg += f"**Region**: {data['region']}\n"
             msg += f"**Country**: {data['country']}\n"
             msg += f"**Location**: {data['loc']}\n"
-            msg += f"**Hostname**: {data['hostname']}\n"
-            msg += f"**Org**: {data['org']}\n"
             msg += f"**Postal**: {data['postal']}\n"
             msg += f"**Timezone**: {data['timezone']}"
             await ctx.send(msg)
