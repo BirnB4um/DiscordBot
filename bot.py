@@ -353,6 +353,9 @@ async def download_audio(ctx, url="", extension="mp4"):
     elif file_path == "error":
         await ctx.send("error occured")
         return
+    elif file_path == "regex_error":
+        await ctx.send("regex-error occured")
+        return
     elif file_path == "no_stream":
         await ctx.send("no stream found. Try webm extension with .download_audio [URL] webm")
         return
@@ -394,6 +397,9 @@ async def download_video(ctx, url="", extension="mp4"):
         return
     elif file_path == "error":
         await ctx.send("error occured")
+        return
+    elif file_path == "regex_error":
+        await ctx.send("regex-error occured")
         return
     elif file_path == "no_stream":
         await ctx.send("no stream found. Try webm extension with .download_video [URL] webm")
@@ -685,6 +691,9 @@ async def stream(ctx, *msg):
     elif file_path == "error":
         await ctx.send("error occured")
         return
+    elif file_path == "regex_error":
+        await ctx.send("regex-error occured")
+        return
     elif file_path == "no_stream":
         await ctx.send("no stream found")
         return
@@ -875,6 +884,9 @@ async def thumbnail(ctx, link=""):
     url = yt_dl.get_yt_thumbnail(link)
     if url == "error":
         await ctx.send("error occured")
+        return
+    elif url == "regex_error":
+        await ctx.send("regex-error occured")
         return
     elif url == "unavailable":
         await ctx.send("video ID is unavailable")
@@ -1138,6 +1150,10 @@ async def stream_4chan(ctx, count="1", verbose="yes"):
         elif file_path == "error":
             if verbose:
                 await ctx.send(f"error occured: {video_url}")
+            continue
+        elif file_path == "regex_error":
+            if verbose:
+                await ctx.send(f"regex-error occured: {video_url}")
             continue
         elif file_path == "no_stream":
             if verbose:

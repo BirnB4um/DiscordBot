@@ -6,6 +6,7 @@ import os
 from datetime import datetime
 import time
 
+
 it = innertube.InnerTube(use_oauth=True)
 use_oauth = True
 token_start_time = 0
@@ -92,7 +93,7 @@ def get_yt_thumbnail(url=""):
     except VideoUnavailable:
         return "unavailable"
     except RegexMatchError:
-        return "unavailable"
+        return "regex_error"
     except:
         return "error"
 
@@ -180,7 +181,7 @@ def download_yt_audio(url="", folder="temp/", extension="mp4", size_limit=MAX_SI
     except VideoUnavailable:
         return "unavailable"
     except RegexMatchError:
-        return "unavailable"
+        return "regex_error"
     except:
         return "error"
 
@@ -213,6 +214,7 @@ def download_yt_video(url="", folder="temp/", extension="mp4", include_audio=Tru
     except VideoUnavailable:
         return "unavailable"
     except RegexMatchError:
-        return "unavailable"
+        return "regex_error"
     except:
         return "error"
+    
