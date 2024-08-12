@@ -1095,6 +1095,7 @@ async def stream(ctx, *msg):
         return
     
     await add_to_queue(msg)
+    await ctx.send(f"{msg} added to queue")
     await stream_audio(ctx)
 
 
@@ -1115,6 +1116,7 @@ async def play(ctx, sound=""):
         return
     
     await add_to_queue(sound)
+    await ctx.send(f"{sound} added to queue")
     await stream_audio(ctx)
 
 
@@ -1204,7 +1206,7 @@ async def stream_4chan(ctx, count="1"):
 
     async with queue_lock:
         audio_queue.extend(video_list)
-
+    await ctx.send(f"{count} videos added to queue")
     await stream_audio(ctx)
         
 
