@@ -182,7 +182,7 @@ def download_yt_audio(url="", folder="temp/", extension="mp4", size_limit=MAX_SI
         return "unavailable"
     except RegexMatchError:
         return "regex_error"
-    except:
+    except Exception as e:
         return "error"
 
 

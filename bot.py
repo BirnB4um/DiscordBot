@@ -120,7 +120,130 @@ sound_files = {
     "creeper": "sounds/creeper.mp3"
     }
 
+audio_queue = []
+audiostream_lock = asyncio.Lock()
+queue_lock = asyncio.Lock()
+current_audio = ""
+
 #=======================
+
+##### Functions #####
+
+async def stream_audio(ctx):
+    global audio_queue, current_audio
+
+    #check if already playing
+    if audiostream_lock.locked():
+        return
+    
+    async with audiostream_lock:
+        
+        while True:
+
+            if len(bot.voice_clients) == 0:
+                await ctx.send("stopped playing audio")
+                return
+
+            vc = bot.voice_clients[0]
+
+            async with queue_lock:
+                if len(audio_queue) == 0:
+                    break
+                source = audio_queue.pop(0)
+
+            sound_file = None
+            now_playing = source
+
+            # internal sound file
+            if source in sound_files:
+                sound_file = sound_files[source]
+                current_audio = source
+            
+            else:
+                # youtube link
+                if re.match(yt_vid_url, source):
+                    url = source
+
+                # youtube search
+                else:
+                    videos = yt_dl.get_search_result(source)
+                    if videos == None:
+                        await ctx.send("no video found or quota exceeded. Search term: " + source)
+                        continue
+
+                    #get video
+                    url = ""
+                    for vid in videos:
+                        if yt_dl.check_video(vid):
+                            url = vid
+                            break
+
+                    if url == "":
+                        await ctx.send("no matching video found for search term: " + source)
+                        continue
+
+
+                # download audio
+                file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url, "temp/", "mp4", 50)
+                if file_path == "unavailable":
+                    await ctx.send(f"video ID is unavailable: <{url}>")
+                    continue
+                elif file_path == "error":
+                    await ctx.send(f"error occured: <{url}>")
+                    continue
+                elif file_path == "regex_error":
+                    await ctx.send(f"regex-error occured: <{url}>")
+                    continue
+                elif file_path == "no_stream":
+                    await ctx.send(f"no stream found: <{url}>")
+                    continue
+                elif file_path == "too_large":
+                    await ctx.send(f"audio too large: <{url}>")
+                    continue
+                elif file_path == "age_restricted":
+                    await ctx.send(f"video is age restricted: <{url}>")
+                    continue
+
+                sound_file = file_path
+                now_playing = url
+
+            await ctx.send(f"now playing: {now_playing}")
+
+            if sound_file != None and os.path.isfile(sound_file):
+                current_audio = sound_file.split("/")[-1].split(".")[0]
+                try:
+                    ffmpeg_streamer = FFmpegPCMAudio(sound_file)
+                    vc.play(ffmpeg_streamer)
+
+                    while vc.is_connected() and (vc.is_playing() or vc.is_paused()):
+                        await asyncio.sleep(0.5)
+
+                except Exception as e:
+                    log_error(str(e))
+
+                finally:
+                    vc.stop()
+                    ffmpeg_streamer.cleanup()
+
+                    if "temp/" in sound_file:
+                        os.remove(sound_file)
+
+                    current_audio = ""
+
+            else:
+                await ctx.send("file not found :(")
+
+
+            
+async def clear_queue():
+    global audio_queue
+    async with queue_lock:
+        audio_queue = []
+
+async def add_to_queue(source):
+    global audio_queue
+    async with queue_lock:
+        audio_queue.append(source)
 
 
 ##### EVENTS ######
@@ -139,21 +262,22 @@ async def on_ready():
 @bot.event
 async def on_voice_state_update(member, before, after):
 
+    # if bot 
     if bot.user.id == member.id:
 
-        for vc in bot.voice_clients:
-            vc.stop()
-
-        if before.channel != None:
+        # leave channel if forcefully kicked
+        if before.channel != None and after.channel == None:
             for vc in bot.voice_clients:
-                if vc.channel == before.channel:
-                    await vc.disconnect()
+                vc.stop()
+                await vc.disconnect(force=True)
 
+        # leave channel if there are more than 1
         if len(bot.voice_clients) > 1:
             log(f"voice state update with more than 1 voice_clients: {bot.voice_clients}")
-            for i in range(1,len(bot.voice_clients)):
-                bot.voice_clients[i].stop()
-                await bot.voice_clients[i].disconnect()
+            while len(bot.voice_clients) > 1:
+                vc = bot.voice_clients[-1]
+                vc.stop()
+                await vc.disconnect(force=True)
 
 
 
@@ -618,187 +742,6 @@ async def clear_log(ctx):
         
 
 
-@bot.command(name='join', help=' - join current vc (.join)')
-async def join(ctx):
-
-    auth_voice = ctx.author.voice
-    if auth_voice == None:
-        await ctx.send("you need to join a voicechannel first")
-        return
-
-    log(f"joining channel {auth_voice.channel.id}")
-    
-    for vc in bot.voice_clients:
-        vc.stop()
-        await vc.disconnect()
-
-    await auth_voice.channel.connect()
-   
-    
-@bot.command(name='leave', help=' - leave vc (.leave)')
-async def leave(ctx):
-
-    if len(bot.voice_clients) == 0:
-        await ctx.send("bot needs to join first (.join)")
-        return
-    
-    for vc in bot.voice_clients:
-        log(f"leave voice channel {vc.channel}")
-        await vc.disconnect()
-    
-
-@bot.command(name='stream', help=f" - stream youtube audio in a voicechannel (.stream [youtube url OR search term])")
-async def stream(ctx, *msg):
-    msg = " ".join(msg)
-
-    if len(bot.voice_clients) == 0:
-        await ctx.send("bot needs to join first (.join)")
-        return
-    voice_client = bot.voice_clients[0]
-
-    if msg == "":
-        await ctx.send("please provide a link or a search term (.stream https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
-        return
-
-    #check if url or search term
-    if bool(re.match(link_pattern, msg)):
-        url = msg
-    else:
-        videos = yt_dl.get_search_result(msg)
-        if videos == None:
-            await ctx.send("no video found or quota exceeded")
-            return
-
-        #get video
-        url = ""
-        for vid in videos:
-            if yt_dl.check_video(vid):
-                url = vid
-                break
-
-        if url == "":
-            await ctx.send("no matching video found")
-            return
-
-        await ctx.send("streaming video: " + url)
-
-    
-    file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url, "temp/", "mp4", 50)
-    file_name = file_path.split("/")[-1]
-    if file_path == "unavailable":
-        await ctx.send("video ID is unavailable")
-        return
-    elif file_path == "error":
-        await ctx.send("error occured")
-        return
-    elif file_path == "regex_error":
-        await ctx.send("regex-error occured")
-        return
-    elif file_path == "no_stream":
-        await ctx.send("no stream found")
-        return
-    elif file_path == "too_large":
-        await ctx.send("audio too large :(")
-        return
-    elif file_path == "age_restricted":
-        await ctx.send("video is age restricted")
-        return
-
-    if os.path.isfile("temp/"+file_name):
-        try:
-            if voice_client.is_playing() or voice_client.is_paused():
-                voice_client.stop()
-
-            options = {
-                'options': '-b:a 32k',
-            }
-            ffmpeg_streamer = FFmpegPCMAudio("temp/"+file_name, **options)
-            voice_client.play(ffmpeg_streamer)
-
-            while voice_client.is_playing() or voice_client.is_paused():
-                await asyncio.sleep(0.5)
-
-        except Exception as e:
-            log_error(str(e))
-        finally:
-            voice_client.stop()
-            ffmpeg_streamer.cleanup()
-            
-
-        os.remove("temp/"+file_name)
-    else:
-        await ctx.send("file not found :(")
-
-
-@bot.command(name='play', help=f" - play sounds if joined vc first (.play [sound])")
-async def play(ctx, sound=""):
-
-    if len(bot.voice_clients) == 0:
-        await ctx.send("bot needs to join first (.join)")
-        return
-    voice_client = bot.voice_clients[0]
-
-    if sound in list(sound_files.keys()):
-        log(f"playing audio: {sound_files[sound]}")
-        
-        try:
-            if voice_client.is_playing() or voice_client.is_paused():
-                voice_client.stop()
-
-            options = {
-                'options': '-b:a 32k',
-            }
-            ffmpeg_streamer = FFmpegPCMAudio(sound_files[sound], **options)
-            voice_client.play(ffmpeg_streamer)
-
-            while voice_client.is_playing() or voice_client.is_paused():
-                await asyncio.sleep(0.5)
-
-        except Exception as e:
-            log_error(str(e))
-        finally:
-            voice_client.stop()
-            ffmpeg_streamer.cleanup()
-
-    else:
-        await ctx.send(f"sound {sound} not in list. try one of these:\n"+ "\n".join(f"-{sound}" for sound in list(sound_files.keys())))
-
-    
-@bot.command(name='stop', help=' - stop current sound (.stop)')
-async def stop(ctx):
-    if len(bot.voice_clients) == 0:
-        await ctx.send("bot needs to join first (.join)")
-        return
-    
-    log("stop audio")
-    for vc in bot.voice_clients:
-        vc.stop()
-
-
-@bot.command(name='pause', help=' - pause current sound (.pause)')
-async def pause(ctx):
-    if len(bot.voice_clients) == 0:
-        await ctx.send("bot needs to join first (.join)")
-        return
-    
-    log("pausing audio")
-    for vc in bot.voice_clients:
-        if vc.is_playing():
-            vc.pause()
-    
-
-@bot.command(name='resume', help=' - resume current sound (.resume)')
-async def resume(ctx):
-    if len(bot.voice_clients) == 0:
-        await ctx.send("bot needs to join first (.join)")
-        return
-    
-    log("resuming audio")
-    for vc in bot.voice_clients:
-        if vc.is_paused():
-            vc.resume()
-    
-
 @bot.command(name='spruch', help=' - get random spruch (.spruch [amount])')
 async def spruch(ctx, amount="1"):
     try:
@@ -1103,103 +1046,194 @@ async def ip(ctx, password=""):
     await ctx.send("password set")
 
 
-@bot.command(name='stream_4chan', help=f" - stream youtube videos from 4chan in a voicechannel (.stream_4chan [amount] [verbose=yes/no])")
-async def stream_4chan(ctx, count="1", verbose="yes"):
 
-    if verbose.lower() == "yes":
-        verbose = True
-    elif verbose.lower() == "no":
-        verbose = False
-    else:
-        await ctx.send("verbose has to be either 'yes' or 'no'")
+
+@bot.command(name='join', help=' - join current vc (.join)')
+async def join(ctx):
+
+    auth_voice = ctx.author.voice
+    if auth_voice == None:
+        await ctx.send("you need to join a voicechannel first")
         return
+
+    log(f"joining channel {auth_voice.channel.id}")
+    
+    if len(bot.voice_clients) > 0:
+        for vc in bot.voice_clients:
+            await vc.move_to(auth_voice.channel)
+    else:
+        await auth_voice.channel.connect()
+   
+    
+@bot.command(name='leave', help=' - leave vc (.leave)')
+async def leave(ctx):
 
     if len(bot.voice_clients) == 0:
         await ctx.send("bot needs to join first (.join)")
         return
-    voice_client = bot.voice_clients[0]
+    
+    for vc in bot.voice_clients:
+        log(f"leave voice channel {vc.channel}")
+        await vc.disconnect()
+    
 
+@bot.command(name='stream', help=f" - stream youtube audio in a voicechannel (.stream [youtube url OR search term])")
+async def stream(ctx, *msg):
+
+    if len(bot.voice_clients) == 0:
+        await ctx.send("bot needs to join first (.join)")
+        return
+
+    msg = " ".join(msg)
+    if msg == "":
+        await ctx.send("please provide a link or a search term (.stream https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
+        return
+    
+    await add_to_queue(msg)
+    await stream_audio(ctx)
+
+
+
+@bot.command(name='play', help=f" - play sounds if joined vc first (.play [sound])")
+async def play(ctx, sound=""):
+
+    if len(bot.voice_clients) == 0:
+        await ctx.send("bot needs to join first (.join)")
+        return
+    
+    if sound == "":
+        await stream_audio(ctx)
+        return
+
+    if sound not in sound_files:
+        await ctx.send(f"sound '{sound}' not in list. try one of these:\n"+ "\n".join(f"-{sound}" for sound in list(sound_files.keys())))
+        return
+    
+    await add_to_queue(sound)
+    await stream_audio(ctx)
+
+
+    
+@bot.command(name='stop', help=' - stop current sound and clear queue (.stop)')
+async def stop(ctx):
+    if len(bot.voice_clients) == 0:
+        await ctx.send("bot needs to join first (.join)")
+        return
+    
+    await clear_queue()
+    for vc in bot.voice_clients:
+        vc.stop()
+
+    
+    
+@bot.command(name='skip', help=' - skip current audio (.skip [amount])')
+async def skip(ctx, amount="1"):
+    if len(bot.voice_clients) == 0:
+        await ctx.send("bot needs to join first (.join)")
+        return
+    
     try:
-        count = int(count)
+        amount = int(amount)
+        amount = constrain(amount, 1, 100)
     except:
         await ctx.send("amount should be an integer.")
         return
 
-    if count < 0:
-        count = 100
+    async with queue_lock:
+        for i in range(amount-1):
+            if len(audio_queue) > 0:
+                audio_queue.pop(0)
 
-    count = constrain(count, 1, 100)
+    for vc in bot.voice_clients:
+        vc.stop()
 
+
+@bot.command(name='pause', help=' - pause current sound (.pause)')
+async def pause(ctx):
+    if len(bot.voice_clients) == 0:
+        await ctx.send("bot needs to join first (.join)")
+        return
+    
+    log("pausing audio")
+    for vc in bot.voice_clients:
+        if vc.is_playing():
+            vc.pause()
+    
+
+@bot.command(name='resume', help=' - resume current sound (.resume)')
+async def resume(ctx):
+    if len(bot.voice_clients) == 0:
+        await ctx.send("bot needs to join first (.join)")
+        return
+    
+    log("resuming audio")
+    for vc in bot.voice_clients:
+        if vc.is_paused():
+            vc.resume()
+    
+
+@bot.command(name='stream_4chan', help=f" - stream youtube videos from 4chan in a voicechannel (.stream_4chan [amount])")
+async def stream_4chan(ctx, count="1"):
+    global audio_queue
+
+    if len(bot.voice_clients) == 0:
+        await ctx.send("bot needs to join first (.join)")
+        return
+
+    try:
+        count = int(count)
+        count = constrain(count, 1, 100)
+    except:
+        await ctx.send("amount should be an integer.")
+        return
+
+    video_list = []
     for vid_i in range(count):
 
         while True:
             video_url = random.choice(fourchan_links["youtube"])
             if bool(re.match(yt_vid_url, video_url)):
                 break
+
+        video_list.append(video_url)
+
+    async with queue_lock:
+        audio_queue.extend(video_list)
+
+    await stream_audio(ctx)
         
-        if len(bot.voice_clients) == 0:
-            return
-        voice_client = bot.voice_clients[0]
 
-        file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, video_url, "temp/", "mp4", 50)
-        file_name = file_path.split("/")[-1]
-        if file_path == "unavailable":
-            if verbose:
-                await ctx.send("video ID is unavailable")
-            continue
-        elif file_path == "error":
-            if verbose:
-                await ctx.send(f"error occured: {video_url}")
-            continue
-        elif file_path == "regex_error":
-            if verbose:
-                await ctx.send(f"regex-error occured: {video_url}")
-            continue
-        elif file_path == "no_stream":
-            if verbose:
-                await ctx.send("no stream found")
-            continue
-        elif file_path == "too_large":
-            if verbose:
-                await ctx.send("audio too large :(")
-            continue
-        elif file_path == "age_restricted":
-            if verbose:
-                await ctx.send("video is age restricted")
-            continue
 
-        if verbose:
-            await ctx.send(f"streaming video: {video_url}")
+@bot.command(name='queue', help=' - show audio queue')
+async def queue(ctx, command=""):
 
-        if os.path.isfile("temp/"+file_name):
-            try:
-                if voice_client.is_playing() or voice_client.is_paused():
-                    voice_client.stop()
+    if command == "":
+        async with queue_lock:
+            msg = "Currently playing: " + current_audio + f"\nQueue ({len(audio_queue)}):\n"
+            for i in range(min(10, len(audio_queue))):
+                if re.match(link_pattern, audio_queue[i]):
+                    msg += f"{i+1}: <{audio_queue[i]}>\n"
+                else:
+                    msg += f"{i+1}: {audio_queue[i]}\n"
 
-                options = {
-                    'options': '-b:a 32k',
-                }
-                ffmpeg_streamer = FFmpegPCMAudio("temp/"+file_name, **options)
-                voice_client.play(ffmpeg_streamer)
+        await ctx.send(msg)
+        return
+    elif command.lower() == "clear":
+        await clear_queue()
+        return
+    elif command.lower() == "help":
+        help_msg = "Commands:\n"
+        help_msg += ".queue -> show queue\n"
+        help_msg += ".queue clear -> clear queue\n"
+        help_msg += ".queue help -> show this menu\n"
+        return
+    else:
+        await ctx.send("command not found. try '.queue help'")
+        return
 
-                while voice_client.is_playing() or voice_client.is_paused():
-                    await asyncio.sleep(0.5)
 
-            except Exception as e:
-                log_error(str(e))
-            finally:
-                voice_client.stop()
-                ffmpeg_streamer.cleanup()
-                
 
-            os.remove("temp/"+file_name)
-        else:
-            if verbose:
-                await ctx.send("file not found :(")
-        
-        await asyncio.sleep(5)
-    
-    
+
 
 
 # run bot
