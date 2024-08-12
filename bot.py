@@ -1214,7 +1214,12 @@ async def queue(ctx, command=""):
 
     if command == "":
         async with queue_lock:
-            msg = "Currently playing: " + current_audio + f"\nQueue ({len(audio_queue)}):\n"
+            msg = "Currently playing: "
+            if re.match(link_pattern, current_audio):
+                msg += f"<{current_audio}>"
+            else:
+                msg += current_audio
+            msg += f"\nQueue ({len(audio_queue)}):\n"
             for i in range(min(10, len(audio_queue))):
                 if re.match(link_pattern, audio_queue[i]):
                     msg += f"{i+1}: <{audio_queue[i]}>\n"
