@@ -124,6 +124,8 @@ audio_queue = []
 audiostream_lock = asyncio.Lock()
 queue_lock = asyncio.Lock()
 current_audio = ""
+audio_volume = 1.0
+audio_speed = 1.0
 
 #=======================
 
@@ -153,11 +155,11 @@ async def stream_audio(ctx):
 
             sound_file = None
             now_playing = source
+            current_audio = source
 
             # internal sound file
             if source in sound_files:
                 sound_file = sound_files[source]
-                current_audio = source
             
             else:
                 # youtube link
@@ -184,6 +186,7 @@ async def stream_audio(ctx):
 
 
                 # download audio
+                current_audio = url
                 file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url, "temp/", "mp4", 50)
                 if file_path == "unavailable":
                     await ctx.send(f"video ID is unavailable: <{url}>")
@@ -212,7 +215,8 @@ async def stream_audio(ctx):
             if sound_file != None and os.path.isfile(sound_file):
                 current_audio = sound_file.split("/")[-1].split(".")[0]
                 try:
-                    ffmpeg_streamer = FFmpegPCMAudio(sound_file)
+                    options = {'options': f'-vn -af "volume={audio_volume:.1f}, atempo={audio_speed:.1f}"'}
+                    ffmpeg_streamer = FFmpegPCMAudio(sound_file, **options)
                     vc.play(ffmpeg_streamer)
 
                     while vc.is_connected() and (vc.is_playing() or vc.is_paused()):
@@ -1215,6 +1219,8 @@ async def queue(ctx, command=""):
                     msg += f"{i+1}: <{audio_queue[i]}>\n"
                 else:
                     msg += f"{i+1}: {audio_queue[i]}\n"
+            if len(audio_queue) > 10:
+                msg += "..."
 
         await ctx.send(msg)
         return
@@ -1231,7 +1237,37 @@ async def queue(ctx, command=""):
         await ctx.send("command not found. try '.queue help'")
         return
 
+@bot.command(name='audio_option', help=' - set audio options (.audio_option [command])')
+async def audio_option(ctx, command="", value="1.0"):
+    global audio_volume, audio_speed
 
+    try:
+        value = float(value)
+    except:
+        await ctx.send("value has to be a float")
+        return
+
+    if command == "":
+        await ctx.send(f"**Volume**: {audio_volume:.1f}\n**Speed**: {audio_speed:.1f}")
+        return
+    elif command.lower() == "help":
+        help_msg = "Commands:\n"
+        help_msg += ".audio_option -> show options\n"
+        help_msg += ".audio_option volume [value] -> set volume\n"
+        help_msg += ".audio_option speed [value] -> set speed\n"
+        return
+    elif command.lower() == "volume":
+        value = constrain(value, 0.1, 100.0)
+        value = round(value, 1)
+        audio_volume = value
+        await ctx.send(f"volume set to {audio_volume}")
+        return
+    elif command.lower() == "speed":
+        value = constrain(value, 0.5, 100.0)
+        value = round(value, 1)
+        audio_speed = value
+        await ctx.send(f"speed set to {audio_speed}")
+        return
 
 
 
