@@ -228,6 +228,7 @@ async def stream_audio(ctx):
                 finally:
                     vc.stop()
                     ffmpeg_streamer.cleanup()
+                    #FIXME: terminate ffmpeg process properly
 
                     if "temp/" in sound_file:
                         os.remove(sound_file)
@@ -1226,12 +1227,14 @@ async def queue(ctx, command=""):
         return
     elif command.lower() == "clear":
         await clear_queue()
+        await ctx.send("queue cleared")
         return
     elif command.lower() == "help":
         help_msg = "Commands:\n"
         help_msg += ".queue -> show queue\n"
         help_msg += ".queue clear -> clear queue\n"
         help_msg += ".queue help -> show this menu\n"
+        await ctx.send(help_msg)
         return
     else:
         await ctx.send("command not found. try '.queue help'")
@@ -1257,7 +1260,7 @@ async def audio_option(ctx, command="", value="1.0"):
         help_msg += ".audio_option speed [value] -> set speed\n"
         return
     elif command.lower() == "volume":
-        value = constrain(value, 0.1, 100.0)
+        value = constrain(value, 0.1, 1000.0)
         value = round(value, 1)
         audio_volume = value
         await ctx.send(f"volume set to {audio_volume}")
