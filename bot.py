@@ -34,7 +34,7 @@ bot = commands.Bot(command_prefix='.', intents=intents)
 restart_delay = 0
 link_pattern = re.compile(r'https?://\S+', re.IGNORECASE)
 yt_vid_url = re.compile(r'(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/(watch\?v=)?([a-zA-Z0-9_-]{11})', re.IGNORECASE)
-
+standby_mode = False
 
 def log(text, print_to_console=False):
     log_msg = datetime.now().strftime("[%d/%m/%Y %H:%M:%S] ") + text
@@ -229,6 +229,7 @@ async def stream_audio(ctx):
                     vc.stop()
                     ffmpeg_streamer.cleanup()
                     #FIXME: terminate ffmpeg process properly
+                    ffmpeg_streamer._process.terminate()
 
                     if "temp/" in sound_file:
                         os.remove(sound_file)
@@ -292,6 +293,14 @@ async def on_message(message):
         return
     
     is_command = message.content[0] == "."
+
+    
+    if standby_mode:
+        if message.content.startswith(".standby"):
+            global standby_mode
+            standby_mode = False
+            await message.channel.send(f"standby mode: {standby_mode}")
+        return
 
     # crazy? I was crazy once.
     if not is_command and "crazy" in message.content.lower():
@@ -1050,7 +1059,11 @@ async def ip(ctx, password=""):
         
     await ctx.send("password set")
 
-
+@bot.command(name='standby', help=' - toggle standby mode')
+async def standby(ctx):
+    global standby_mode
+    standby_mode = not standby_mode
+    await ctx.send(f"standby mode set to {standby_mode}")
 
 
 @bot.command(name='join', help=' - join current vc (.join)')
@@ -1086,8 +1099,9 @@ async def leave(ctx):
 async def stream(ctx, *msg):
 
     if len(bot.voice_clients) == 0:
-        await ctx.send("bot needs to join first (.join)")
-        return
+        await join(ctx)
+        # await ctx.send("bot needs to join first (.join)")
+        # return
 
     msg = " ".join(msg)
     if msg == "":
@@ -1104,8 +1118,9 @@ async def stream(ctx, *msg):
 async def play(ctx, sound=""):
 
     if len(bot.voice_clients) == 0:
-        await ctx.send("bot needs to join first (.join)")
-        return
+        await join(ctx)
+        # await ctx.send("bot needs to join first (.join)")
+        # return
     
     if sound == "":
         await stream_audio(ctx)
@@ -1136,8 +1151,9 @@ async def stop(ctx):
 @bot.command(name='skip', help=' - skip current audio (.skip [amount])')
 async def skip(ctx, amount="1"):
     if len(bot.voice_clients) == 0:
-        await ctx.send("bot needs to join first (.join)")
-        return
+        await join(ctx)
+        # await ctx.send("bot needs to join first (.join)")
+        # return
     
     try:
         amount = int(amount)
@@ -1184,8 +1200,9 @@ async def stream_4chan(ctx, count="1"):
     global audio_queue
 
     if len(bot.voice_clients) == 0:
-        await ctx.send("bot needs to join first (.join)")
-        return
+        await join(ctx)
+        # await ctx.send("bot needs to join first (.join)")
+        # return
 
     try:
         count = int(count)
