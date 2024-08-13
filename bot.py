@@ -229,7 +229,6 @@ async def stream_audio(ctx):
                     vc.stop()
                     ffmpeg_streamer.cleanup()
                     #FIXME: terminate ffmpeg process properly
-                    ffmpeg_streamer._process.terminate()
 
                     if "temp/" in sound_file:
                         os.remove(sound_file)
@@ -1072,7 +1071,7 @@ async def join(ctx):
     auth_voice = ctx.author.voice
     if auth_voice == None:
         await ctx.send("you need to join a voicechannel first")
-        return
+        return False
 
     log(f"joining channel {auth_voice.channel.id}")
     
@@ -1081,6 +1080,8 @@ async def join(ctx):
             await vc.move_to(auth_voice.channel)
     else:
         await auth_voice.channel.connect()
+    
+    return True
    
     
 @bot.command(name='leave', help=' - leave vc (.leave)')
@@ -1099,7 +1100,9 @@ async def leave(ctx):
 async def stream(ctx, *msg):
 
     if len(bot.voice_clients) == 0:
-        await join(ctx)
+        did_join = await join(ctx)
+        if not did_join:
+            return
         # await ctx.send("bot needs to join first (.join)")
         # return
 
@@ -1118,7 +1121,9 @@ async def stream(ctx, *msg):
 async def play(ctx, sound=""):
 
     if len(bot.voice_clients) == 0:
-        await join(ctx)
+        did_join = await join(ctx)
+        if not did_join:
+            return
         # await ctx.send("bot needs to join first (.join)")
         # return
     
@@ -1200,7 +1205,9 @@ async def stream_4chan(ctx, count="1"):
     global audio_queue
 
     if len(bot.voice_clients) == 0:
-        await join(ctx)
+        did_join = await join(ctx)
+        if not did_join:
+            return
         # await ctx.send("bot needs to join first (.join)")
         # return
 
@@ -1264,7 +1271,7 @@ async def queue(ctx, command=""):
         await ctx.send("command not found. try '.queue help'")
         return
 
-@bot.command(name='audio_option', help=' - set audio options (.audio_option [command])')
+@bot.command(name='audio_option', help=' - set audio options (.audio_option [command] [value])')
 async def audio_option(ctx, command="", value="1.0"):
     global audio_volume, audio_speed
 
