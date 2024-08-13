@@ -289,15 +289,15 @@ async def on_voice_state_update(member, before, after):
 
 @bot.event
 async def on_message(message):
+    global standby_mode
+    
     if (message.author == bot.user):
         return
     
     is_command = message.content[0] == "."
 
-    
     if standby_mode:
         if message.content.startswith(".standby"):
-            global standby_mode
             standby_mode = False
             await message.channel.send(f"standby mode: {standby_mode}")
         return
