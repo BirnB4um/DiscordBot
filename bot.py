@@ -668,16 +668,16 @@ async def set_chatbot_confidence(ctx, conf=None):
     chatbot.temperature = conf
     await ctx.send(f"confidence of chatbot {chatbot_mode} set to {chatbot.temperature}")
 
-@bot.command(name='pull_update', help=' - pulls the latest update from github (.pull_update yes)')
-async def pull_update(ctx, confirmation=""):
+@bot.command(name='pull_update', help=' - pulls the latest update from github (.pull_update [yes/no])')
+async def pull_update(ctx, restart_after="no"):
     if ctx.author.id == user_id["thimo"]:
-        if confirmation.lower() == "yes":
-            await ctx.send("pulling update...")
-            log("pulling update...")
-            code = os.system("git pull")
-            await ctx.send(f"update completed! exitcode: {code}")
-            return
-        await ctx.send("confirm with '.pull_update yes'")
+        await ctx.send("pulling update...")
+        log("pulling update...")
+        code = os.system("git pull")
+        #TODO: maybe run "git reset --hard" if pull fails
+        await ctx.send(f"update completed! exitcode: {code}")
+        if restart_after.lower() == "yes":
+            await restart(ctx)
 
 @bot.command(name='shutdown', help=' - shuts down server (.shutdown yes)')
 async def shutdown(ctx, confirmation=""):
