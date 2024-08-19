@@ -5,6 +5,7 @@ from googleapiclient.errors import HttpError
 import os
 from datetime import datetime
 import time
+import random
 
 
 it = innertube.InnerTube(use_oauth=True)
@@ -114,7 +115,7 @@ def check_video(url, max_duration=60*10):
         return False
 
 
-def get_search_result(query, category_id=10, max_results=50):
+def get_search_result(query, category_id=10, max_results=20, shuffle=False):
     if youtube_api is None:
         return None
     try:
@@ -143,6 +144,10 @@ def get_search_result(query, category_id=10, max_results=50):
         return None
 
     video_ids = ["https://www.youtube.com/watch?v=" + id["id"]["videoId"] for id in search_response["items"] if id["snippet"]["liveBroadcastContent"] == "none"]
+    
+    if(shuffle):
+        random.shuffle(video_ids)
+
     return video_ids
 
 

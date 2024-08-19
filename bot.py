@@ -168,7 +168,8 @@ async def stream_audio(ctx):
 
                 # youtube search
                 else:
-                    videos = yt_dl.get_search_result(source)
+
+                    videos = yt_dl.get_search_result(source, max_results=20, shuffle=True)
                     if videos == None:
                         await ctx.send("no video found or quota exceeded. Search term: " + source)
                         continue
