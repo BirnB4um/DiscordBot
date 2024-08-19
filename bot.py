@@ -1113,7 +1113,10 @@ async def stream(ctx, *msg):
         return
     
     await add_to_queue(msg)
-    await ctx.send(f"{msg} added to queue")
+    if re.match(yt_vid_url, msg):
+        await ctx.send(f"<{msg}> added to queue")
+    else:
+        await ctx.send(f"{msg} added to queue")
     await stream_audio(ctx)
 
 
