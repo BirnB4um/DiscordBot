@@ -21,6 +21,7 @@ import module.random_screenshot as rand_screenshot
 import module.youtube_downloader as yt_dl
 import module.GIF_search as GIF_search
 from module.chatbot import DiscordChatbot, FourchanChatbot
+from module.archive import get_archived_data
 
 
 ##### SETUP #####
@@ -1309,6 +1310,25 @@ async def audio_option(ctx, command="", value="1.0"):
         await ctx.send(f"speed set to {audio_speed}")
         return
 
+
+@bot.command(name='wayback', help=' - get oldest image in archive (.wayback [URL] [oldest/newest])')
+async def wayback(ctx, url="", order="oldest"):
+
+    if url == "":
+        await ctx.send("please provide a link (.wayback https://www.google.com)")
+        return
+    
+    if order.lower() not in ["oldest", "newest"]:
+        await ctx.send("order has to be either 'oldest' or 'newest'")
+        return
+
+    result = get_archived_data(url, order)
+    if not result["success"]:
+        await ctx.send("Error: " + result["error"])
+        return
+
+    msg = f"Date: {result['date']}, URL: {result['url']}"
+    await ctx.send(msg)
 
 
 
