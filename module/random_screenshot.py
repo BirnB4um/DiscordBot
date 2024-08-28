@@ -1,74 +1,48 @@
 import requests
 from bs4 import BeautifulSoup
 import random
-from time import sleep
+import time
 
-abc = "abcdefghijklmnopqrstuvwxyz0123456789"#"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+abc = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
-#headers = {'User-Agent': 'Chrome'}
+headers = {
+    "Accept": "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8",
+    "Accept-Encoding": "gzip, deflate, br, zstd",
+    "Sec-Fetch-Dest": "image",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
+}
 
-not_working_links = [ "//st.prntscr.com/2022/09/11/1722/img/0_173a7b_211be8ff.png", 
-                    "https://i.imgur.com/TpcUYdH.jpg", 
-                    "https://i.imgur.com/Uuh3Nj4.jpg", 
-                    "https://i.imgur.com/OqQcO7h.jpg"]
 
 def get_random_id(len=6):
-    return "".join(random.choice(abc) for i in range(len))
+    return "".join(random.choices(abc, k=len))
 
-def get_image_url(id):
-    url = "https://prnt.sc/" + id
-    try:
-        page = requests.get(url, headers=headers)
-    except:
-        return -1
-    soup = BeautifulSoup(page.content, "html.parser")
+def check_image(url):
+    response = requests.get(url, headers=headers, allow_redirects=False)
 
-    src = soup.find_all(class_="no-click screenshot-image")
-    if len(src) == 0:
-        return -1
-
-    if src[0]["src"] in not_working_links :#check if image was removed
-        return -1
+    if response.status_code != 200:
+        return False
     
-    return src[0]["src"]
-
-
-def get_image_data(src_url):
-    try:
-        img = requests.get(src_url, headers=headers)
-    except:
-        return -1
-    if not img.status_code == 200:#check if image is available
-        return -1
-    return img.content
+    # if not image
+    if "image" not in response.headers["Content-Type"]:
+        return False
+    
+    # if default 'removed' image
+    if response.headers["Content-Length"] == "503":
+        return False
+    
+    return response.content
 
 def get_random_screenshot():
-    sleep_between_tries = 2
-    max_tries = 10
-    tries = 0
-    while True:
-        tries += 1
-        if tries > max_tries:
-            sleep(sleep_between_tries)
-            return None, None, None, tries
-
-        id = get_random_id(6)
-        url = get_image_url(id)
-        if url == -1:
-            sleep(sleep_between_tries)
+    sleep_between_tries = 0.5
+    max_tries = 20
+    for tries in range(1, max_tries+1):
+        id = get_random_id(5)
+        url = "https://i.imgur.com/" + id + ".png"
+        data = check_image(url)
+        if not data:
+            time.sleep(sleep_between_tries)
             continue
 
-        data = get_image_data(url)
-        if data == -1:
-            sleep(sleep_between_tries)
-            continue   
-        if len(data) == 503:
-            sleep(sleep_between_tries)
-            continue
+        return url, data, tries
+    return None, None, max_tries
 
-        return id, url, data, tries
-
-def save_image(name, image_data):
-    with open(name, 'wb') as file:
-        file.write(image_data)

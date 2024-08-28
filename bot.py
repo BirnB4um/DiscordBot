@@ -865,24 +865,26 @@ async def screenshot(ctx, amount="1"):
         return
     amount = constrain(amount, 1, 30)
 
-    sleep_between_images = 4
+    sleep_between_images = 1
 
     for number in range(amount):
-        id, url, data, tries = await bot.loop.run_in_executor(None, rand_screenshot.get_random_screenshot)
+        url, data, tries = await bot.loop.run_in_executor(None, rand_screenshot.get_random_screenshot)
 
         if url == None:
             await ctx.send(f"exceeded number of tries ({tries})! skipping this image...")
             await asyncio.sleep(sleep_between_images)
             continue
         
-        msg = f"ID: {id}, image nr.: {number+1}/{amount}, nr tries: {tries}, URL: {url}"
-        if "imgur" in url:
-            await ctx.send(msg)
-        else:
-            with open("temp/screenshot.png", 'wb') as file:
-                file.write(data)
+        msg = f"image nr.: {number+1}/{amount}, tries: {tries}, URL: {url}"
+        await ctx.send(msg)
 
-            await ctx.send(msg, file=discord.File("temp/screenshot.png"))
+        # if "imgur" in url:
+        #     await ctx.send(msg)
+        # else:
+        #     with open("temp/screenshot.png", 'wb') as file:
+        #         file.write(data)
+        #     await ctx.send(msg, file=discord.File("temp/screenshot.png"))
+
         await asyncio.sleep(sleep_between_images)
 
 
