@@ -1322,7 +1322,7 @@ async def wayback(ctx, url="", order="oldest"):
         await ctx.send("order has to be either 'oldest' or 'newest'")
         return
 
-    result = get_archived_data(url, order)
+    result = await bot.loop.run_in_executor(None, get_archived_data, url, order)
     if not result["success"]:
         await ctx.send("Error: " + result["error"])
         return
