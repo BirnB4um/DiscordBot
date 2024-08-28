@@ -1311,7 +1311,7 @@ async def audio_option(ctx, command="", value="1.0"):
         return
 
 
-@bot.command(name='wayback', help=' - get oldest image in archive (.wayback [URL] [oldest/newest])')
+@bot.command(name='wayback', help=' - get data from the wayback machine (.wayback [URL] [oldest/newest])')
 async def wayback(ctx, url="", order="oldest"):
 
     if url == "":
@@ -1330,6 +1330,27 @@ async def wayback(ctx, url="", order="oldest"):
     msg = f"Date: {result['date']}, URL: {result['url']}"
     await ctx.send(msg)
 
+
+@bot.command(name='imgFromURL', help=' - get image from url (.imgFromURL [URL])')
+async def imgFromURL(ctx, url=""):
+    
+    try:
+        response = requests.get(url, headers=rand_screenshot.headers)
+        if response.status_code != 200:
+            await ctx.send(f"error: {response.status_code}")
+            return
+        if "image" not in response.headers["Content-Type"]:
+            await ctx.send("not an image")
+            return
+        
+        with open("temp/image.png", 'wb') as file:
+            file.write(response.content)
+
+        await ctx.send(file=discord.File("temp/image.png"))
+        
+    except Exception as e:
+        await ctx.send("error occured" + str(e))
+        return
 
 
 # run bot
