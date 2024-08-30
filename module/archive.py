@@ -19,6 +19,20 @@ def get_archived_data(url, snapshotDate: Literal["oldest", "newest"] = "oldest")
         else:
             return {"success": False, "error": "Invalid snapshot date"}
         
+        if snapshot.statuscode != 200:
+            if snapshot.statuscode == 403:
+                return {"success": False, "error": f"access denied"}
+            elif snapshot.statuscode == 404:
+                return {"success": False, "error": f"not found"}
+            elif snapshot.statuscode == 503:
+                return {"success": False, "error": f"service unavailable"}
+            elif snapshot.statuscode == 429:
+                return {"success": False, "error": f"rate limit exceeded"}
+            elif snapshot.statuscode == 400:
+                return {"success": False, "error": f"bad request"}
+            else:
+                return {"success": False, "error": f"status code {snapshot.statuscode} from CDX server"}
+        
         date = snapshot.datetime_timestamp.strftime("%d.%m.%Y %H:%M:%S")
 
         response = requests.get(snapshot.archive_url, headers={"User-Agent": user_agent})

@@ -1349,7 +1349,7 @@ async def imgFromURL(ctx, url=""):
         await ctx.send(file=discord.File("temp/image.png"))
         
     except Exception as e:
-        await ctx.send("error occured" + str(e))
+        await ctx.send("error occured " + str(e))
         return
 
 
