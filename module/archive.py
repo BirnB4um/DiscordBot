@@ -18,17 +18,18 @@ def get_archived_data(url, snapshotDate: Literal["oldest", "newest"] = "oldest")
             snapshot = cdx_api.oldest()
         else:
             return {"success": False, "error": "Invalid snapshot date"}
-        
-        if snapshot.statuscode != 200:
-            if snapshot.statuscode == 403:
+
+        if snapshot.statuscode != "200":
+            print("here")
+            if snapshot.statuscode == "403":
                 return {"success": False, "error": f"access denied"}
-            elif snapshot.statuscode == 404:
+            elif snapshot.statuscode == "404":
                 return {"success": False, "error": f"not found"}
-            elif snapshot.statuscode == 503:
+            elif snapshot.statuscode == "503":
                 return {"success": False, "error": f"service unavailable"}
-            elif snapshot.statuscode == 429:
+            elif snapshot.statuscode == "429":
                 return {"success": False, "error": f"rate limit exceeded"}
-            elif snapshot.statuscode == 400:
+            elif snapshot.statuscode == "400":
                 return {"success": False, "error": f"bad request"}
             else:
                 return {"success": False, "error": f"status code {snapshot.statuscode} from CDX server"}
@@ -40,21 +41,21 @@ def get_archived_data(url, snapshotDate: Literal["oldest", "newest"] = "oldest")
         if response.status_code != 200:
             return {"success": False, "error": f"status code {response.status_code} when fetching data"}
         
-        type = response.headers['Content-Type']
+        content_type = response.headers['Content-Type']
 
         # if image, return directly
-        if "image" in type:
-            return {"success": True, "type": type, "date": date, "url": snapshot.archive_url, "content": response.content}
+        if "image" in content_type:
+            return {"success": True, "type": content_type, "date": date, "url": snapshot.archive_url, "content": response.content}
         
         # search for image in the page
         soup = BeautifulSoup(response.text, 'html.parser')
         iframe = soup.find('iframe', id="playback")
         if iframe:
             src = iframe.get('src')
-            return {"success": True, "type": type, "date": date, "url": src}
+            return {"success": True, "type": content_type, "date": date, "url": src}
         
         # if contains other data, return the url
-        return {"success": True, "type": type, "date": date, "url": snapshot.archive_url}
+        return {"success": True, "type": content_type, "date": date, "url": snapshot.archive_url}
 
     except NoCDXRecordFound:
         return {"success": False, "error": "No CDX record found"}
