@@ -189,24 +189,9 @@ async def stream_audio(ctx):
 
                 # download audio
                 current_audio = url
-                file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url, "temp/", "mp4", 50)
-                if file_path == "unavailable":
-                    await ctx.send(f"video ID is unavailable: <{url}>")
-                    continue
-                elif file_path == "error":
-                    await ctx.send(f"error occured: <{url}>")
-                    continue
-                elif file_path == "regex_error":
-                    await ctx.send(f"regex-error occured: <{url}>")
-                    continue
-                elif file_path == "no_stream":
-                    await ctx.send(f"no stream found: <{url}>")
-                    continue
-                elif file_path == "too_large":
-                    await ctx.send(f"audio too large: <{url}>")
-                    continue
-                elif file_path == "age_restricted":
-                    await ctx.send(f"video is age restricted: <{url}>")
+                file_path, error_msg = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url, "temp/", "mp4", 50)
+                if file_path == "error":
+                    await ctx.send(f"error occured: <{url}> {error_msg}")
                     continue
 
                 sound_file = file_path
@@ -474,7 +459,7 @@ async def yt_token(ctx, mode="none"):
 @bot.command(name='download_audio', help=' - download audio of a YT video (.download_audio [URL] [mp4/webm])')
 async def download_audio(ctx, url="", extension="mp4"):
     if url == "":
-        await ctx.send("please provide a link (.download_audio https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
+        await ctx.send("please provide a link (.download_audio <https://www.youtube.com/watch?v=dQw4w9WgXcQ>)")
         return
     
     extension = extension.replace(".", "")
@@ -483,26 +468,11 @@ async def download_audio(ctx, url="", extension="mp4"):
         return
     
     start_time = time.time()
-    file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url, "temp/", extension)
+    file_path, error_msg = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url, "temp/", extension)
     duration = int(time.time() - start_time)
     file_name = file_path.split("/")[-1]
-    if file_path == "unavailable":
-        await ctx.send("video ID is unavailable")
-        return
-    elif file_path == "error":
-        await ctx.send("error occured")
-        return
-    elif file_path == "regex_error":
-        await ctx.send("regex-error occured")
-        return
-    elif file_path == "no_stream":
-        await ctx.send("no stream found. Try webm extension with .download_audio [URL] webm")
-        return
-    elif file_path == "too_large":
-        await ctx.send("audio too large :(")
-        return
-    elif file_path == "age_restricted":
-        await ctx.send("video is age restricted")
+    if file_path == "error":
+        await ctx.send("error occured: " + error_msg)
         return
     else:
         if os.path.isfile(file_path):
@@ -519,7 +489,7 @@ async def download_audio(ctx, url="", extension="mp4"):
 @bot.command(name='download_video', help=' - download YT video (.download_video [URL])')
 async def download_video(ctx, url="", extension="mp4"):
     if url == "":
-        await ctx.send("please provide a link (.download_video https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
+        await ctx.send("please provide a link (.download_video <https://www.youtube.com/watch?v=dQw4w9WgXcQ>)")
         return
     
     extension = extension.replace(".", "")
@@ -528,26 +498,11 @@ async def download_video(ctx, url="", extension="mp4"):
         return
     
     start_time = time.time()
-    file_path = await bot.loop.run_in_executor(None, yt_dl.download_yt_video, url, "temp/", extension, True)
+    file_path, error_msg = await bot.loop.run_in_executor(None, yt_dl.download_yt_video, url, "temp/", extension, True)
     duration = int(time.time() - start_time)
     file_name = file_path.split("/")[-1]
-    if file_path == "unavailable":
-        await ctx.send("video ID is unavailable")
-        return
-    elif file_path == "error":
-        await ctx.send("error occured")
-        return
-    elif file_path == "regex_error":
-        await ctx.send("regex-error occured")
-        return
-    elif file_path == "no_stream":
-        await ctx.send("no stream found. Try webm extension with .download_video [URL] webm")
-        return
-    elif file_path == "too_large":
-        await ctx.send("video too large :(")
-        return
-    elif file_path == "age_restricted":
-        await ctx.send("video is age restricted")
+    if file_path == "error":
+        await ctx.send("error occured: " + error_msg)
         return
     else:
         if os.path.isfile(file_path):
@@ -836,21 +791,12 @@ async def florida_man(ctx, *message):
 @bot.command(name='thumbnail', help=' - get thumbnail of a YouTube video (.thumbnail [link])')
 async def thumbnail(ctx, link=""):
     if link == "":
-        await ctx.send("please provide a link (Bsp: .thumbnail https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
+        await ctx.send("please provide a link (Bsp: .thumbnail <https://www.youtube.com/watch?v=dQw4w9WgXcQ>)")
         return
 
-    url = yt_dl.get_yt_thumbnail(link)
+    url, error_msg = yt_dl.get_yt_thumbnail(link)
     if url == "error":
-        await ctx.send("error occured")
-        return
-    elif url == "regex_error":
-        await ctx.send("regex-error occured")
-        return
-    elif url == "unavailable":
-        await ctx.send("video ID is unavailable")
-        return
-    elif url == "age_restricted":
-        await ctx.send("video is age restricted")
+        await ctx.send("error occured: " + error_msg)
         return
     else:
         await ctx.send(url)
@@ -1112,7 +1058,7 @@ async def stream(ctx, *msg):
 
     msg = " ".join(msg)
     if msg == "":
-        await ctx.send("please provide a link or a search term (.stream https://www.youtube.com/watch?v=dQw4w9WgXcQ)")
+        await ctx.send("please provide a link or a search term (.stream <https://www.youtube.com/watch?v=dQw4w9WgXcQ>)")
         return
     
     await add_to_queue(msg)

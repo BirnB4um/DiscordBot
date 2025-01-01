@@ -2,7 +2,7 @@
 commands:
 	- mc_skin amount:1
 
-- switch from pytube to yt-dlp
+- bundle commands together (e.g. .generate_4chan, .generate_discord, .set_chatbot_confidence, ...)
 - .stream recommendations based on link (do in infinite loop)
 - log more information about everything
 - randomly evolve AI picture (pick best image)
