@@ -474,7 +474,7 @@ async def download_video(ctx, url="", extension="mp4"):
         return
     
     start_time = time.time()
-    file_path, error_msg = await bot.loop.run_in_executor(None, yt_dl.download_yt_video, url, "temp/", extension, True)
+    file_path, error_msg = await bot.loop.run_in_executor(None, yt_dl.download_yt_video, url, "temp/", extension)
     duration = int(time.time() - start_time)
     file_name = file_path.split("/")[-1]
     if file_path == "error":
