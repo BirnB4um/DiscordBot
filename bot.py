@@ -189,7 +189,7 @@ async def stream_audio(ctx):
 
                 # download audio
                 current_audio = url
-                file_path, error_msg = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url, "temp/", "mp4", 50)
+                file_path, error_msg = await bot.loop.run_in_executor(None, yt_dl.download_yt_audio, url, "temp/", "mp3", 50)
                 if file_path == "error":
                     await ctx.send(f"error occured: <{url}> {error_msg}")
                     continue
@@ -432,15 +432,15 @@ async def set_discord_chatbot_name(ctx, *name):
     discord_chatbot_name = name
     await ctx.send(f"discord chatbot name set to: {discord_chatbot_name}")
     
-@bot.command(name='download_audio', help=' - download audio of a YT video (.download_audio [URL] [mp4/webm])')
-async def download_audio(ctx, url="", extension="mp4"):
+@bot.command(name='download_audio', help=' - download audio of a YT video (.download_audio [URL] [mp3/wav])')
+async def download_audio(ctx, url="", extension="mp3"):
     if url == "":
         await ctx.send("please provide a link (.download_audio <https://www.youtube.com/watch?v=dQw4w9WgXcQ>)")
         return
     
     extension = extension.replace(".", "")
-    if extension not in ["mp4", "webm"]:
-        await ctx.send("extension has to be either 'mp4' or 'webm'.\nTry webm extension with .download_audio [URL] webm")
+    if extension not in ["mp3", "wav"]:
+        await ctx.send("extension has to be either 'mp3' or 'wav'.\nTry webm extension with .download_audio [URL] mp3")
         return
     
     start_time = time.time()
@@ -469,8 +469,8 @@ async def download_video(ctx, url="", extension="mp4"):
         return
     
     extension = extension.replace(".", "")
-    if extension not in ["mp4", "webm"]:
-        await ctx.send("extension has to be either 'mp4' or 'webm'. \nTry webm extension with .download_video [URL] webm")
+    if extension not in ["mp4"]:
+        await ctx.send("extension can only be 'mp4'. \nTry webm extension with .download_video [URL] mp4")
         return
     
     start_time = time.time()

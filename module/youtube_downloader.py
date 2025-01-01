@@ -108,7 +108,7 @@ def download_yt_video(url="", folder="temp/", extension="mp4", size_limit=MAX_SI
         return "error", str(e)
 
 
-def download_yt_audio(url="", folder="temp/", extension="wav", size_limit=MAX_SIZE_MB):
+def download_yt_audio(url="", folder="temp/", extension="mp3", size_limit=MAX_SIZE_MB):
     """
     size_limit in MB
     """
