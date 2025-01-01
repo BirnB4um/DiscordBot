@@ -9,7 +9,7 @@ import random
 import traceback
 
 youtube_api = None
-MAX_SIZE_MB = 25
+MAX_SIZE_MB = 10
 
 def load_youtube_api():
     global youtube_api
