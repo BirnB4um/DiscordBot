@@ -6,7 +6,6 @@ from datetime import datetime
 import random
 import asyncio
 # from bs4 import BeautifulSoup
-from gpiozero import CPUTemperature
 import requests
 import json
 import psutil
@@ -67,6 +66,12 @@ with open(data_folder / "florida_man.json", "r") as file:
 #4chan links
 with open(data_folder / "4chan_link.json", "r") as file:
     fourchan_links = json.load(file)
+
+
+def get_cpu_temp():
+    with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
+        temp_milli = f.read()
+    return int(temp_milli) / 1000.0
 
 
 
@@ -387,7 +392,7 @@ async def server_status(ctx, do_network_speed="no"):
             UP_SPEED = -1
 
     try:
-        CPU_TEMP = CPUTemperature().temperature
+        CPU_TEMP = get_cpu_temp()
     except:
         CPU_TEMP = -1
     CPU = psutil.cpu_percent(interval=0.5)
