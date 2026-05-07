@@ -374,10 +374,10 @@ async def screenshot(ctx, amount="1"):
 
 
 
-@bot.command(name='server_status', help=' - show server status (.server_status [do_network_speed])')
-async def server_status(ctx, do_network_speed="no"):
+@bot.command(name='server_status', help=' - show server status (.server_status [do_network_speed(y/n)])')
+async def server_status(ctx, do_network_speed="n"):
 
-    if do_network_speed.lower() == "yes":
+    if do_network_speed.lower()[0] == "y":
         try:
             st = speedtest.Speedtest()
             st.get_best_server()
