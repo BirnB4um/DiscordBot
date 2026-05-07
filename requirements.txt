@@ -3,3 +3,6 @@ waybackpy
 beautifulsoup4
 yt-dlp
 gpiozero
+psutil
+speedtest-cli
+google-api-python-client
