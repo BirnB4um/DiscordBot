@@ -3,6 +3,7 @@ FROM python:3.12-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cron \
     tzdata \
+    ffmpeg \
     gcc \
     python3-dev \
     libffi-dev \
