@@ -1,0 +1,17 @@
+
+
+services:
+
+  discord-bot:
+    build: .
+    container_name: discord-bot
+    image: discord-bot
+    restart: unless-stopped
+
+    volumes:
+      - ./data/:/opt/discord-bot/data/
+
+      # - ./src/:/opt/discord-bot/src/ # for DEV
+
+    env_file:
+      - .env

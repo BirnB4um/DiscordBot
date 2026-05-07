@@ -1,0 +1,5 @@
+discord
+waybackpy
+beautifulsoup4
+yt-dlp
+gpiozero

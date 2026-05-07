@@ -1,11 +1,6 @@
-/.env
-/__pycache__
-/test.py
-/webZeug.py
+.env
+**/__pycache__
 /data/chat.txt
 /data/log.txt
 /data/launcher_log.txt
-/temp/screenshot.png
-/data/picoGPT_encoder.json
-/data/picoGPT_vocab.bpe
-/data/picoGPT_params.pkl
+/temp/*
