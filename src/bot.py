@@ -10,8 +10,8 @@ import requests
 import json
 import psutil
 import speedtest
-from discord.ext import commands
 import discord
+from discord.ext import commands
 # from discord import FFmpegPCMAudio
 
 import random_screenshot as rand_screenshot
@@ -19,6 +19,7 @@ import youtube_downloader as yt_dl
 import GIF_search as GIF_search
 from archive import get_archived_data
 from Logger import get_logger
+from osumulti_reader import OsuMultiReader
 
 
 ##### SETUP #####
@@ -35,6 +36,8 @@ standby_mode = False
 
 data_folder = Path("/opt/discord-bot/data/")
 temp_folder = data_folder / "temp"
+
+osumulti = OsuMultiReader()
 
 logger = get_logger("bot")
 chat_logger = get_logger("chat")
@@ -56,7 +59,8 @@ user_id = {"josef":762641864335556608,
         "thimo":618140491879546881,
         "philipp":335489399968104450,
         "tim":791411006513217536,
-        "birnbot":955887644578046032}
+        "birnbot":955887644578046032,
+        "maups": 234467158510403585}
                     
 # florida man stories
 florida_man_data = []
@@ -72,6 +76,80 @@ def get_cpu_temp():
     with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
         temp_milli = f.read()
     return int(temp_milli) / 1000.0
+
+
+
+
+
+
+
+
+# @bot.command()
+# async def pretty_post(ctx):
+#     # 1. Create the embed and set its side-border color using a Hex code
+#     # 0x3498db is a nice vibrant blue
+#     embed = discord.Embed(
+#         title="🚀 Project Status Update",
+#         description="Here is the latest breakdown of our development cycle.",
+#         color=0x3498db 
+#     )
+    
+#     # 2. Add structured fields (inline=True puts them side-by-side)
+#     embed.add_field(name="Version", value="v2.4.1", inline=True)
+#     embed.add_field(name="Status", value="🟢 Online", inline=True)
+    
+#     # 3. Add a large main image at the bottom of the embed
+#     embed.set_image(url="https://i.imgur.com/wSTF2v8.png")
+    
+#     # 4. Add a smaller thumbnail image in the top-right corner
+#     embed.set_thumbnail(url="https://i.imgur.com/Mz6N6Zf.png")
+    
+#     # 5. Add a footer
+#     embed.set_footer(text="Updates every minute • Powered by Python")
+
+#     # Send the message with the embed
+#     await ctx.send(embed=embed)
+
+
+
+
+
+# class RowView(discord.ui.View):
+#     def __init__(self):
+#         super().__init__(timeout=None)
+
+#     # row=0 places this button on the first component row
+#     @discord.ui.button(label="Option A", style=discord.ButtonStyle.blurple, row=0)
+#     async def button_a(self, interaction: discord.Interaction, button: discord.ui.Button):
+#         await interaction.response.send_message("You chose Line 1 (Option A)", ephemeral=True)
+
+#     # row=1 forces this button onto a brand new line underneath the first one
+#     @discord.ui.button(label="Option B", style=discord.ButtonStyle.green, row=1)
+#     async def button_b(self, interaction: discord.Interaction, button: discord.ui.Button):
+#         await interaction.response.send_message("You chose Line 2 (Option B)", ephemeral=True)
+
+#     # row=2 forces this onto a third line
+#     @discord.ui.button(label="Option C", style=discord.ButtonStyle.red, row=2)
+#     async def button_c(self, interaction: discord.Interaction, button: discord.ui.Button):
+#         await interaction.response.send_message("You chose Line 3 (Option C)", ephemeral=True)
+
+
+# @bot.command()
+# async def stacked_post(ctx):
+#     # Create an embed where each "line" or item is distinct
+#     embed = discord.Embed(
+#         title="📋 Multi-Line Menu", 
+#         description="Each option below corresponds to the stacked buttons below!",
+#         color=0x34495e
+#     )
+    
+#     # Using markdown or fields to create visual separation that matches the button rows
+#     embed.add_field(name="🔹 Line 1: Setup Profile", value="Click the primary blue button below.", inline=False)
+#     embed.add_field(name="🔹 Line 2: View Status", value="Click the green success button below.", inline=False)
+#     embed.add_field(name="🔹 Line 3: Reset Settings", value="Click the red danger button below.", inline=False)
+
+#     view = RowView()
+#     await ctx.send(embed=embed, view=view)
 
 
 
@@ -423,6 +501,9 @@ async def delete(ctx, id=0):
 @bot.command(name='to', help=' - send a message to ... (.to [name] [message])')
 async def to(ctx, name="", *message):
 
+    if ctx.author.id != user_id["thimo"]:
+        return
+
     if name.lower() not in user_id:
         await ctx.send(f"name '{name}' not found. try one of these: " + ", ".join(user_id.keys()))
         return
@@ -454,6 +535,9 @@ async def gif(ctx, *message):
 @bot.command(name='set_status', help=' - change status of the bot (.status off/on)')
 async def set_status(ctx, status=""):
 
+    if ctx.author.id != user_id["thimo"]:
+        return
+
     if status == "":
         return
     elif status.lower() == "off":
@@ -468,6 +552,10 @@ async def set_status(ctx, status=""):
 @bot.command(name='restart', help=' - restart the bot')
 async def restart(ctx, delay="0"):
     global restart_delay
+    
+    if ctx.author.id != user_id["thimo"]:
+        return
+    
     try:
         restart_delay = int(delay)
         restart_delay = constrain(restart_delay, 0, 3600) # max 1 hour delay
@@ -506,6 +594,10 @@ async def ip(ctx):
 @bot.command(name='standby', help=' - toggle standby mode')
 async def standby(ctx):
     global standby_mode
+    
+    if ctx.author.id != user_id["thimo"]:
+        return
+    
     standby_mode = not standby_mode
     await ctx.send(f"standby mode set to {standby_mode}")
 
@@ -554,6 +646,45 @@ async def imgFromURL(ctx, url=""):
     except Exception as e:
         await ctx.send("error occured " + str(e))
         return
+
+
+
+
+
+
+
+class OsuMultiView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None) # timeout=None means the buttons won't expire
+
+    @discord.ui.button(label="Refresh", style=discord.ButtonStyle.blurple, custom_id="refresh_lobbies_btn")
+    async def click_me(self, interaction: discord.Interaction, button: discord.ui.Button):
+        # await interaction.response.send_message(f"You clicked the button, {interaction.user.mention}!", ephemeral=True)
+        # flags = flags=discord.MessageFlags(suppress_embeds=True)
+        
+        # edit the message to show the updated lobby list
+        await interaction.response.defer(ephemeral=True)
+        await interaction.message.edit(content="refreshing data...", embed=None)
+        final_text_post = osumulti.get_lobbies_as_text(char_limit=4096)
+        emb = discord.Embed(description=final_text_post, color=0xf668a7)
+        # await interaction.message.edit(content=final_text_post)
+        await interaction.message.edit(content=None, embed=emb)
+
+
+# Test Payload Command
+@bot.command(name='osu_lobbies', help=' - lists all public osu multiplayer lobbies')
+async def osu_lobbies(ctx):
+    refresh_view = OsuMultiView()
+    
+    # await ctx.send("collecting data...")
+    final_text_post = osumulti.get_lobbies_as_text(char_limit=4096)
+    # await ctx.send(final_text_post, view=refresh_view)
+    
+    # await ctx.send("creating post...")
+    
+    emb = discord.Embed(description=final_text_post, color=0xf668a7)
+    await ctx.send(embed=emb, view=refresh_view)
+
 
 
 # run bot
