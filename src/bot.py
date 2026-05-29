@@ -254,7 +254,16 @@ async def on_message_delete(message):
 async def on_reaction_add(reaction, user):
     # log(f" >> {user.name} added reaction:{reaction.message.content},{reaction.count},{reaction.emoji}")
 
-    if reaction.emoji == "🗑️" and reaction.message.author == bot.user:
+    if reaction.message.author != bot.user:
+        return
+    
+    if isinstance(reaction.emoji, discord.Emoji):
+        emoji_name = reaction.emoji.name
+        if "trash" in emoji_name.lower():
+            await reaction.message.delete()
+            return
+        
+    if reaction.emoji == "🗑️":
         log("deleting message")
         await reaction.message.delete()
 
