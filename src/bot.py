@@ -13,6 +13,7 @@ import speedtest
 import discord
 from discord.ext import commands
 # from discord import FFmpegPCMAudio
+import traceback
 
 import random_screenshot as rand_screenshot
 import youtube_downloader as yt_dl
@@ -45,9 +46,9 @@ chat_logger = get_logger("chat")
 def log(text):
     logger.info(text)
 
-def log_error(text):
-    logger.error(text, exec_info=True)
-    
+def log_error(text, exc_info=True):
+    logger.error(text, exc_info=exc_info)
+
 def constrain(x, minX, maxX):
     return max(minX, min(maxX, x))
 
@@ -157,6 +158,8 @@ def get_cpu_temp():
 
 @bot.event
 async def on_ready():
+    bot.add_view(OsuMultiView())
+    
     log("Bot is ready!")
     user = await bot.fetch_user(user_id["thimo"])
     await user.send("Bot Ready!")
@@ -281,12 +284,15 @@ async def on_error(event, *args, **kwargs):
     else:
         log_error(f"other error occured! {args} {kwargs}")
 
-
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.CommandNotFound):
-        await ctx.send("that command doesn't exist. Try .help")
-    log_error(str(error))
+        await ctx.send("That command doesn't exist. Try .help")
+        return
+
+    tb_lines = traceback.format_exception(type(error), error, error.__traceback__)
+    full_traceback_str = "".join(tb_lines)
+    log_error(full_traceback_str, exc_info=False)
 
 
 ##### COMMANDS ######
@@ -674,9 +680,20 @@ class OsuMultiView(discord.ui.View):
         
         # edit the message to show the updated lobby list
         await interaction.response.defer(ephemeral=True)
+        
+        search_filters_str = interaction.message.embeds[0].title if interaction.message.embeds else ""
+        search_filters_str = search_filters_str.strip()
+        log(f"refreshing lobby data with filters: {search_filters_str}")
+        valid, response = osumulti.parse_filters(search_filters_str)
+        if not valid:
+            await interaction.followup.send("Error parsing filters: " + response + "\nTry `.osu_lobbies help` for more info on filter format and available keys.", 
+                                            ephemeral=True)
+            return
+        search_filters = response
+        
         await interaction.message.edit(content="refreshing data...", embed=None)
-        final_text_post = osumulti.get_lobbies_as_text(char_limit=4096)
-        emb = discord.Embed(description=final_text_post, color=0xf668a7)
+        final_text_post = osumulti.get_lobbies_as_text(search_filter=search_filters, char_limit=4096)
+        emb = discord.Embed(title=search_filters_str, description=final_text_post, color=0xf668a7)
         # await interaction.message.edit(content=final_text_post)
         await interaction.message.edit(content=None, embed=emb)
 
@@ -686,60 +703,46 @@ class OsuMultiView(discord.ui.View):
 async def osu_lobbies(ctx, *filters):
     
     async def send_help():
-        await ctx.send("Filter format: key:value; key:value; ...\nAvailable keys: country, public, diff, player, limit\nExample: .osu_lobbies country:de,us,fr; public:true; diff:2.1-4.5; player:1-5; limit:10")
+        msg = (
+               "Use this command to get a list of all public osu multiplayer lobbies with optional filters.\n\n"
+               "**Filter format**: key:value; key:value; ...\n"
+               "**Available keys**:\n"
+               "- country (comma-separated values, e.g. `country:de,us,fr`) -> sort and filter by how many players belong to list of countries\n"
+               "- public (true/false/all, e.g., `public:true`) -> filter public/private/all lobbies. Defaults to true\n"
+               "- diff (min-max star range, e.g., `diff:2.1-4.5` OR `diff:3.5`) -> filter if ranges overlap\n"
+               "- player (min-max player count, e.g., `player:1-5` OR `player:3`) -> filter lobbies by player count\n"
+               "- limit (integer, e.g., `limit:10`) -> limit the number of lobbies displayed\n"
+               "Example: `.osu_lobbies country:de,us,fr; public:true; diff:2.1-4.5; player:1-5; limit:10`\n"
+               "This example would show up to 10 public lobbies that have between 1 and 5 players, a difficulty range that overlaps with 2.1-4.5 stars, and sorts them by how many players belong to the countries Germany, USA, or France.")
+        await ctx.send(msg)
+
+
+    filters = " ".join(filters).strip()
     
-    if filters and filters[0].lower() == "help":
+    if "help" == filters.lower():
         await send_help()
         return
     
     # example filter => country:de,us,fr; public:true; diff:2.1-4.5; player:1-5; limit:10
-    filters = " ".join(filters)
+    
+    log(f"parsing filters: {filters} {type(filters)}")
     
     # parse filters
-    search_filter = {}
-    for filter in filters.split(";"):
-        filter = filter.strip()
-        key, value = filter.split(":", 1)
-        key = key.strip().lower()
-        value = value.strip().lower()
-        
-        if key == "country":
-            search_filter["country"] = [c.strip().lower() for c in value.split(",") if c.strip()]
-        elif key == "public":
-            search_filter["public"] = value in ["true", "1", "yes"]
-        elif key == "diff":
-            if "-" in value:
-                min_diff, max_diff = value.split("-", 1)
-                try:
-                    search_filter["diff"] = [float(min_diff.strip()), float(max_diff.strip())]
-                except ValueError:
-                    await ctx.send("invalid diff format. Use min-max (eg. diff:2.1-4.5)")
-                    return
-        elif key == "player":
-            if "-" in value:
-                min_player, max_player = value.split("-", 1)
-                try:
-                    search_filter["player"] = [int(min_player.strip()), int(max_player.strip())]
-                except ValueError:
-                    await ctx.send("invalid player format. Use min-max (eg. player:1-5)")
-                    return
-        elif key == "limit":
-            try:
-                search_filter["limit"] = int(value)
-            except ValueError:
-                await ctx.send("invalid limit format. Use an integer > 0 (eg. limit:10)")
-                return
-        else:
-            await ctx.send(f"unknown filter key: {key}. Use .osu_lobbies help for filter options.")
-            return
-    
-    
+    x = osumulti.parse_filters(filters)
+    valid, response = x
+    if not valid:
+        await ctx.send("Error parsing filters: " + response + "\nTry `.osu_lobbies help` for more info on filter format and available keys.")
+        return
+
+    search_filter = response
+    print(f"parsed filters: {search_filter}")
+
 
     refresh_view = OsuMultiView()
     # await ctx.send("collecting data...")
     final_text_post = osumulti.get_lobbies_as_text(search_filter=search_filter, char_limit=4096)
     # await ctx.send(final_text_post, view=refresh_view)
-    emb = discord.Embed(description=final_text_post, color=0xf668a7)
+    emb = discord.Embed(title=filters, description=final_text_post, color=0xf668a7)
     await ctx.send(embed=emb, view=refresh_view)
 
 
