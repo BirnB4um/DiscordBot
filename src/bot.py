@@ -719,13 +719,11 @@ async def osu_lobbies(ctx, *filters):
 
     filters = " ".join(filters).strip()
     
+    log(f"called osu lobbies with filters: {filters}")
+    
     if "help" == filters.lower():
         await send_help()
         return
-    
-    # example filter => country:de,us,fr; public:true; diff:2.1-4.5; player:1-5; limit:10
-    
-    log(f"parsing filters: {filters} {type(filters)}")
     
     # parse filters
     x = osumulti.parse_filters(filters)
@@ -735,7 +733,6 @@ async def osu_lobbies(ctx, *filters):
         return
 
     search_filter = response
-    print(f"parsed filters: {search_filter}")
 
 
     refresh_view = OsuMultiView()
