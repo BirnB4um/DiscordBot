@@ -43,6 +43,7 @@ class OsuMultiReader():
                 
             elif key == "public":
                 if value == "all":
+                    del search_filter["public"]
                     continue
                 search_filter["public"] = value in ["true", "1", "yes"]
                 
