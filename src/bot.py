@@ -704,7 +704,7 @@ async def osu_lobbies(ctx, *filters):
     
     async def send_help():
         msg = (
-               "Use this command to get a list of all public osu multiplayer lobbies with optional filters.\n\n"
+               "Use this command to get a list of all osu multiplayer lobbies with optional filters.\n\n"
                "**Filter format**: key:value; key:value; ...\n"
                "**Available keys**:\n"
                "- country (comma-separated values, e.g. `country:de,us,fr`) -> sort and filter by how many players belong to list of countries\n"
