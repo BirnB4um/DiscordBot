@@ -259,6 +259,7 @@ async def on_reaction_add(reaction, user):
     
     if isinstance(reaction.emoji, discord.Emoji):
         emoji_name = reaction.emoji.name
+        log(f"custom emoji added: {emoji_name} {emoji_name.lower()} {type(emoji_name)}")
         if "trash" in emoji_name.lower():
             await reaction.message.delete()
             return
@@ -681,16 +682,63 @@ class OsuMultiView(discord.ui.View):
 
 
 # Test Payload Command
-@bot.command(name='osu_lobbies', help=' - lists all public osu multiplayer lobbies')
-async def osu_lobbies(ctx):
+@bot.command(name='osu_lobbies', help=' - lists all public osu multiplayer lobbies (.osu_lobbies help)')
+async def osu_lobbies(ctx, *filters):
+    
+    async def send_help():
+        await ctx.send("Filter format: key:value; key:value; ...\nAvailable keys: country, public, diff, player, limit\nExample: .osu_lobbies country:de,us,fr; public:true; diff:2.1-4.5; player:1-5; limit:10")
+    
+    if filters and filters[0].lower() == "help":
+        await send_help()
+        return
+    
+    # example filter => country:de,us,fr; public:true; diff:2.1-4.5; player:1-5; limit:10
+    filters = " ".join(filters)
+    
+    # parse filters
+    search_filter = {}
+    for filter in filters.split(";"):
+        filter = filter.strip()
+        key, value = filter.split(":", 1)
+        key = key.strip().lower()
+        value = value.strip().lower()
+        
+        if key == "country":
+            search_filter["country"] = [c.strip().lower() for c in value.split(",") if c.strip()]
+        elif key == "public":
+            search_filter["public"] = value in ["true", "1", "yes"]
+        elif key == "diff":
+            if "-" in value:
+                min_diff, max_diff = value.split("-", 1)
+                try:
+                    search_filter["diff"] = [float(min_diff.strip()), float(max_diff.strip())]
+                except ValueError:
+                    await ctx.send("invalid diff format. Use min-max (eg. diff:2.1-4.5)")
+                    return
+        elif key == "player":
+            if "-" in value:
+                min_player, max_player = value.split("-", 1)
+                try:
+                    search_filter["player"] = [int(min_player.strip()), int(max_player.strip())]
+                except ValueError:
+                    await ctx.send("invalid player format. Use min-max (eg. player:1-5)")
+                    return
+        elif key == "limit":
+            try:
+                search_filter["limit"] = int(value)
+            except ValueError:
+                await ctx.send("invalid limit format. Use an integer > 0 (eg. limit:10)")
+                return
+        else:
+            await ctx.send(f"unknown filter key: {key}. Use .osu_lobbies help for filter options.")
+            return
+    
+    
+
     refresh_view = OsuMultiView()
-    
     # await ctx.send("collecting data...")
-    final_text_post = osumulti.get_lobbies_as_text(char_limit=4096)
+    final_text_post = osumulti.get_lobbies_as_text(search_filter=search_filter, char_limit=4096)
     # await ctx.send(final_text_post, view=refresh_view)
-    
-    # await ctx.send("creating post...")
-    
     emb = discord.Embed(description=final_text_post, color=0xf668a7)
     await ctx.send(embed=emb, view=refresh_view)
 
