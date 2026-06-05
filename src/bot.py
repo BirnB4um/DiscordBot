@@ -767,7 +767,7 @@ async def osu_lobbies(ctx, *filters):
 
 
 
-@tasks.loop(minutes=1)
+@tasks.loop(seconds=30)
 async def refresh_osu_players():
     global osu_latest_player_data
     
@@ -803,7 +803,7 @@ async def refresh_osu_players():
                 user = await bot.fetch_user(int(user_id))
                 if user:
                     try:
-                        await user.send(f"Player {username} ({player_id}) is now {status}!")
+                        await user.send(f"{'🟩' if is_online else '🟥'} {username} is now {status}!")
                     except Exception as e:
                         log_error(f"failed to send DM to user {user_id} about player {player_id} status change. Error: {e}")
                 else:
@@ -827,7 +827,12 @@ async def osu_players(ctx, *commands):
     global osu_multi_players
 
     async def send_help():
-        msg = "helpmenu coming soon :)"
+        msg = ("Use this command to track osu multiplayer players and get notifications when they go online/offline.\n\n"
+                "Available commands:\n"
+                "- `.osu_players` or `.osu_players list`: Show your tracked players.\n"
+                "- `.osu_players add <player_id>`: Add a player to your tracking list.\n"
+                "- `.osu_players remove <player_id>`: Remove a player from your tracking list.\n"
+                "- `.osu_players help`: Show this help message.")
         await ctx.send(msg)
 
     if len(commands) == 1 and commands[0].lower() == "help":
@@ -840,7 +845,7 @@ async def osu_players(ctx, *commands):
     if len(commands) == 0 or commands[0].lower() == "list":
         player_ids = osu_multi_players.get(user_id, [])
         
-        msg = "**Osu Multiplayer Player Tracking**\n\n"
+        msg = "**Osu Player Tracking**\n"
         if not player_ids:
             msg += "You are currently not tracking any players. Use `.osu_players add 12345678` to add players to your tracking list.\n"
             await ctx.send(msg)
@@ -849,11 +854,11 @@ async def osu_players(ctx, *commands):
         for player_id in player_ids:
             player_data = osu_latest_player_data.get(player_id, {})
             if not player_data:
-                msg += f"- [{player_id}] (no data)\n"
+                msg += f"⬛ <NO_NAME> [{player_id}]\n"
             else:
                 username = player_data.get("username", "unknown")
                 is_online = player_data.get("is_online", False)
-                msg += f"- [{player_id}] {username} {'🟢' if is_online else '🔴'}\n"
+                msg += f"{'🟩' if is_online else '🟥'} {username} [{player_id}]\n"
         
         await ctx.send(msg)
         return
