@@ -146,3 +146,33 @@ class OsuMultiReader():
             logger.error(f"Error fetching latest lobby data: {e}")
             logger.error(traceback.format_exc())
             return None
+    
+    
+    def set_target_players(self, ids:list[str]):
+        try:
+            response = requests.post("http://host.docker.internal:5001/api/osumulti/set_target_players", json={"ids": ids})
+            if response.status_code != 200:
+                logger.error(f"Error setting target players: {response.status_code} - {response.text}")
+                return False
+        
+            return True
+
+        except Exception as e:
+            logger.error(f"Error setting target players: {e}")
+            logger.error(traceback.format_exc())
+            return False
+    
+    
+    def get_players(self) -> dict:
+        try:
+            response = requests.get("http://host.docker.internal:5001/api/osumulti/players")
+            if response.status_code != 200:
+                logger.error(f"Error fetching player data: {response.status_code}")
+                return None
+        
+            return response.json()
+
+        except Exception as e:
+            logger.error(f"Error fetching player data: {e}")
+            logger.error(traceback.format_exc())
+            return None

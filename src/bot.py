@@ -11,7 +11,7 @@ import json
 import psutil
 import speedtest
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 # from discord import FFmpegPCMAudio
 import traceback
 
@@ -71,6 +71,22 @@ with open(data_folder / "florida_man.json", "r") as file:
 #4chan links
 with open(data_folder / "4chan_link.json", "r") as file:
     fourchan_links = json.load(file)
+
+
+# osu multiplayer data
+osu_multi_players_file = data_folder / "osu_multi_players.json"
+if osu_multi_players_file.is_file():
+    with open(osu_multi_players_file, "r") as file:
+        osu_multi_players = json.load(file)
+else:
+    osu_multi_players = {}
+    
+osu_latest_player_data = {}
+
+def save_osu_multi_players():
+    with open(osu_multi_players_file, "w") as file:
+        json.dump(osu_multi_players, file)
+
 
 
 def get_cpu_temp():
@@ -167,6 +183,10 @@ async def on_ready():
     # clear temp folder
     for file in temp_folder.iterdir():
         file.unlink()
+    
+    # start osu player refresh loop
+    if not refresh_osu_players.is_running():
+        refresh_osu_players.start()
 
 
 @bot.event
@@ -743,6 +763,131 @@ async def osu_lobbies(ctx, *filters):
     await ctx.send(embed=emb, view=refresh_view)
 
 
+
+@tasks.loop(minutes=1)
+def refresh_osu_players():
+    global osu_latest_player_data
+    
+    data = osumulti.get_players()
+    if data is None:
+        log_error("failed to refresh osu player data")
+        return
+    
+    # dont notify on first run
+    if not osu_latest_player_data:
+        osu_latest_player_data = data
+        return
+    
+    # check changes
+    players_with_status_change = []
+    for player_id, player_data in data.items():
+        old_data = osu_latest_player_data.get(player_id, {})
+        if not old_data:
+            continue
+        
+        if player_data.get("is_online", False) != old_data.get("is_online", False):
+            players_with_status_change.append((player_id, player_data))
+            
+    # notify users
+    for player_id, player_data in players_with_status_change:
+        is_online = player_data.get("is_online", False)
+        username = player_data.get("username", "unknown")
+        status = "online" if is_online else "offline"
+        
+        # find users tracking this player
+        for user_id, tracked_players in osu_multi_players.items():
+            if player_id in tracked_players:
+                user = bot.get_user(int(user_id))
+                if user:
+                    try:
+                        user.send(f"Player {username} ({player_id}) is now {status}!")
+                    except Exception as e:
+                        log_error(f"failed to send DM to user {user_id} about player {player_id} status change. Error: {e}")
+                else:
+                    log_error(f"failed to find user object for user id {user_id} when trying to send DM about player {player_id} status change.")
+    
+    # update latest data
+    osu_latest_player_data = data
+    
+
+def update_target_players():
+    all_player_ids = set()
+    for player_list in osu_multi_players.values():
+        all_player_ids.update(player_list)
+        
+    if not osumulti.set_target_players(list(all_player_ids)):
+        log_error("failed to update target players in OsuMultiReader")
+    
+
+@bot.command(name='osu_players', help=' - track osu players and trigger notification when they go online  (.osu_players help)')
+async def osu_players(ctx, *commands):
+    global osu_multi_players
+
+    async def send_help():
+        msg = "helpmenu coming soon :)"
+        await ctx.send(msg)
+
+    if len(commands) == 1 and commands[0].lower() == "help":
+        await send_help()
+        return
+    
+    user_id = str(ctx.author.id)
+    
+    # player menu
+    if len(commands) == 0 or commands[0].lower() == "list":
+        player_ids = osu_multi_players.get(user_id, [])
+        
+        msg = "**Osu Multiplayer Player Tracking**\n\n"
+        if not player_ids:
+            msg += "You are currently not tracking any players. Use `.osu_players add 12345678` to add players to your tracking list.\n"
+            await ctx.send(msg)
+            return
+        
+        for player_id in player_ids:
+            player_data = osu_latest_player_data.get(player_id, {})
+            if not player_data:
+                msg += f"- [{player_id}] (no data)\n"
+            else:
+                username = player_data.get("username", "unknown")
+                is_online = player_data.get("is_online", False)
+                msg += f"- [{player_id}] {username} {'🟢' if is_online else '🔴'}\n"
+        
+        await ctx.send(msg)
+        return
+    
+    
+    # add player
+    if len(commands) >= 2 and commands[0].lower() == "add":
+        player_ids = commands[1:]
+        
+        # check if ids valid
+        if any([not id.isdigit() for id in player_ids]):
+            await ctx.send("player ids should be integers. Try again with valid ids or use `.osu_players help` for more info.")
+            return
+        
+        # add players
+        osu_multi_players[user_id] = list(set(osu_multi_players.get(user_id, []) + set(player_ids)))
+        update_target_players()
+        save_osu_multi_players()
+        
+        await ctx.send(f"Players added to your tracking list: {', '.join(player_ids)}")
+        
+    
+    # remove player
+    if len(commands) >= 2 and commands[0].lower() == "remove":
+        player_ids = commands[1:]
+        
+        # check if ids valid
+        if any([not id.isdigit() for id in player_ids]):
+            await ctx.send("player ids should be integers. Try again with valid ids or use `.osu_players help` for more info.")
+            return
+
+        # remove players
+        osu_multi_players[user_id] = list(set(osu_multi_players.get(user_id, []) - set(player_ids)))
+        update_target_players()
+        save_osu_multi_players()
+        await ctx.send(f"Players removed from your tracking list: {', '.join(player_ids)}")
+        
 
 # run bot
 log("starting bot")
