@@ -829,7 +829,7 @@ async def osu_players(ctx, *commands):
     async def send_help():
         msg = ("Use this command to track osu multiplayer players and get notifications when they go online/offline.\n\n"
                 "Available commands:\n"
-                "- `.osu_players` or `.osu_players list`: Show your tracked players.\n"
+                "- `.osu_players`: Show your tracked players.\n"
                 "- `.osu_players add <player_id>`: Add a player to your tracking list.\n"
                 "- `.osu_players remove <player_id>`: Remove a player from your tracking list.\n"
                 "- `.osu_players help`: Show this help message.")
@@ -842,7 +842,7 @@ async def osu_players(ctx, *commands):
     user_id = str(ctx.author.id)
     
     # player menu
-    if len(commands) == 0 or commands[0].lower() == "list":
+    if len(commands) == 0:
         player_ids = osu_multi_players.get(user_id, [])
         
         msg = "**Osu Player Tracking**\n"
@@ -865,7 +865,11 @@ async def osu_players(ctx, *commands):
     
     
     # add player
-    if len(commands) >= 2 and commands[0].lower() == "add":
+    if commands[0].lower() == "add":
+        if len(commands) < 2:
+            await ctx.send("please provide at least one player id to add. Example: `.osu_players add 12345678`")
+            return
+        
         player_ids = commands[1:]
         
         # check if ids valid
@@ -879,10 +883,15 @@ async def osu_players(ctx, *commands):
         save_osu_multi_players()
         
         await ctx.send(f"Players added to your tracking list: {', '.join(player_ids)}")
+        return
         
     
     # remove player
-    if len(commands) >= 2 and commands[0].lower() == "remove":
+    if commands[0].lower() == "remove":
+        if len(commands) < 2:
+            await ctx.send("please provide at least one player id to remove. Example: `.osu_players remove 12345678`")
+            return
+
         player_ids = commands[1:]
         
         # check if ids valid
@@ -895,6 +904,10 @@ async def osu_players(ctx, *commands):
         update_target_players()
         save_osu_multi_players()
         await ctx.send(f"Players removed from your tracking list: {', '.join(player_ids)}")
+        return
+    
+    await send_help()
+    return
         
 
 # run bot
