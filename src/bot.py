@@ -201,6 +201,9 @@ async def on_message(message):
     if (message.author == bot.user):
         return
     
+    if message.author.bot:
+        return
+    
     is_command = message.content[0] == "."
 
     if standby_mode:
@@ -765,7 +768,7 @@ async def osu_lobbies(ctx, *filters):
 
 
 @tasks.loop(minutes=1)
-def refresh_osu_players():
+async def refresh_osu_players():
     global osu_latest_player_data
     
     data = osumulti.get_players()
@@ -797,10 +800,10 @@ def refresh_osu_players():
         # find users tracking this player
         for user_id, tracked_players in osu_multi_players.items():
             if player_id in tracked_players:
-                user = bot.get_user(int(user_id))
+                user = await bot.fetch_user(int(user_id))
                 if user:
                     try:
-                        user.send(f"Player {username} ({player_id}) is now {status}!")
+                        await user.send(f"Player {username} ({player_id}) is now {status}!")
                     except Exception as e:
                         log_error(f"failed to send DM to user {user_id} about player {player_id} status change. Error: {e}")
                 else:
