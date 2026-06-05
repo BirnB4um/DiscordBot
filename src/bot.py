@@ -869,7 +869,7 @@ async def osu_players(ctx, *commands):
             return
         
         # add players
-        osu_multi_players[user_id] = list(set(osu_multi_players.get(user_id, []) + set(player_ids)))
+        osu_multi_players[user_id] = list(set(osu_multi_players.get(user_id, [])) + set(player_ids))
         update_target_players()
         save_osu_multi_players()
         
@@ -886,7 +886,7 @@ async def osu_players(ctx, *commands):
             return
 
         # remove players
-        osu_multi_players[user_id] = list(set(osu_multi_players.get(user_id, []) - set(player_ids)))
+        osu_multi_players[user_id] = list(set(osu_multi_players.get(user_id, [])) - set(player_ids))
         update_target_players()
         save_osu_multi_players()
         await ctx.send(f"Players removed from your tracking list: {', '.join(player_ids)}")
