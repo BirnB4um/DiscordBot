@@ -829,7 +829,7 @@ async def osu_players(ctx, *commands):
     async def send_help():
         msg = ("Use this command to track osu multiplayer players and get notifications when they go online/offline.\n\n"
                 "Available commands:\n"
-                "- `.osu_players`: Show your tracked players.\n"
+                "- `.osu_players`: Show your tracked players and their current status.\n"
                 "- `.osu_players add <player_id>`: Add a player to your tracking list.\n"
                 "- `.osu_players remove <player_id>`: Remove a player from your tracking list.\n"
                 "- `.osu_players help`: Show this help message.")
