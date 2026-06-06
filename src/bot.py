@@ -187,6 +187,10 @@ async def on_ready():
     # start osu player refresh loop
     if not refresh_osu_players.is_running():
         refresh_osu_players.start()
+    
+    # start osu health check loop
+    if not check_osu_tracker_health.is_running():
+        check_osu_tracker_health.start()
 
 
 @bot.event
