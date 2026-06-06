@@ -767,6 +767,16 @@ async def osu_lobbies(ctx, *filters):
 
 
 
+@tasks.loop(minutes=5)
+async def check_osu_tracker_health():
+    if not osumulti.is_healthy():
+        log_error("osumulti tracker is not healthy!")
+        
+        user = await bot.fetch_user(user_id["thimo"])
+        await user.send("🔥 Osu Tracker is not healthy! Osu might be down or the tokenfile is expired.\nhttps://status.ppy.sh/")
+        
+
+
 @tasks.loop(seconds=30)
 async def refresh_osu_players():
     global osu_latest_player_data

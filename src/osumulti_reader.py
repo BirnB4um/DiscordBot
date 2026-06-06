@@ -176,3 +176,27 @@ class OsuMultiReader():
             logger.error(f"Error fetching player data: {e}")
             logger.error(traceback.format_exc())
             return None
+        
+        
+    def is_healthy(self) -> bool:
+        try:
+            response = requests.get("http://host.docker.internal:5001/api/osumulti/last_update_time")
+            if response.status_code != 200:
+                return False
+        
+            data = response.json()
+            
+            min_last_update_time = min(data["last_lobbies_time"], data["last_players_time"])
+            
+            diff = time.time() - min_last_update_time
+            
+            if diff > 60 * 5: # 5 minutes
+                return False
+            
+            return True
+            
+            
+        except Exception as e:
+            logger.error(f"Error checking OsuMultiReader health: {e}")
+            logger.error(traceback.format_exc())
+            return False
