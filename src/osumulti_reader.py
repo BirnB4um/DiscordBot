@@ -15,7 +15,6 @@ class OsuMultiReader():
     
     def parse_filters(self, filter_str:str):
         
-        
         search_filter = {
             "public": True,  # default to only public lobbies
         }
@@ -36,16 +35,16 @@ class OsuMultiReader():
             
             key, value = command_split[0], command_split[1]
             key = key.strip().lower()
-            value = value.strip().lower()
+            value = value.strip()
             
             if key == "country":
                 search_filter["country"] = [c.strip().lower() for c in value.split(",") if c.strip()]
                 
             elif key == "public":
-                if value == "all":
+                if value.lower() == "all":
                     del search_filter["public"]
                     continue
-                search_filter["public"] = value in ["true", "1", "yes"]
+                search_filter["public"] = value.lower() in ["true", "1", "yes"]
                 
             elif key == "diff":
                 if "-" in value:
@@ -61,19 +60,22 @@ class OsuMultiReader():
                     except ValueError:
                         return False, "invalid diff format. Use min-max (e.g. diff:2.1-4.5 OR diff:3.5)"
 
-            elif key == "player":
+            elif key == "playercount":
                 if "-" in value:
                     min_player, max_player = value.split("-", 1)
                     try:
-                        search_filter["player"] = [int(min_player.strip()), int(max_player.strip())]
+                        search_filter["playercount"] = [int(min_player.strip()), int(max_player.strip())]
                     except ValueError:
-                        return False, "invalid player format. Use min-max (e.g. player:1-5 OR player:3)"
+                        return False, "invalid playercount format. Use min-max (e.g. playercount:1-5 OR playercount:3)"
                 else:
                     try:
                         player = int(value)
-                        search_filter["player"] = [player, player]
+                        search_filter["playercount"] = [player, player]
                     except ValueError:
-                        return False, "invalid player format. Use min-max (e.g. player:1-5 OR player:3)"
+                        return False, "invalid playercount format. Use min-max (e.g. playercount:1-5 OR playercount:3)"
+
+            elif key == "user":
+                search_filter["user"] = [c.strip() for c in value.split(",") if c.strip()]
 
             elif key == "limit":
                 try:
@@ -121,6 +123,14 @@ class OsuMultiReader():
             if player_flags:
                 players_str += " " + " ".join(player_flags)
             
+            # append target player name
+            if "user" in search_filter:
+                found_users = set(search_filter["user"]) & set([p["username"] for p in players])
+                found_users = list(found_users)
+                if found_users:
+                    players_str += " " + ", ".join(found_users)
+                
+            
             if lobby.get("has_password", False):
                 message += "🔒 "
             message += f"`{stars_str}` | {players_str}\n\n"
@@ -133,10 +143,8 @@ class OsuMultiReader():
         
     def get_latest_data(self, search_filter:dict=None):
         try:
-            if search_filter:
-                response = requests.post("http://host.docker.internal:5001/api/osumulti/filter_latest_lobbies", json=search_filter)
-            else:
-                response = requests.get("http://host.docker.internal:5001/api/osumulti/latest_lobbies")
+            search_filter = search_filter or {}
+            response = requests.post("http://host.docker.internal:5001/api/osumulti/filter_latest_lobbies", json=search_filter)
             if response.status_code != 200:
                 return None
         

@@ -737,9 +737,10 @@ async def osu_lobbies(ctx, *filters):
                "- country (comma-separated values, e.g. `country:de,us,fr`) -> sort and filter by how many players belong to list of countries\n"
                "- public (true/false/all, e.g., `public:true`) -> filter public/private/all lobbies. Defaults to true\n"
                "- diff (min-max star range, e.g., `diff:2.1-4.5` OR `diff:3.5`) -> filter if ranges overlap\n"
-               "- player (min-max player count, e.g., `player:1-5` OR `player:3`) -> filter lobbies by player count\n"
+               "- playercount (min-max player count, e.g., `playercount:1-5` OR `playercount:3`) -> filter lobbies by player count\n"
+               "- user (only return lobbies containing at least one of given users, e.g., `user:peppy` OR `user:peppy,BTMC`) -> filter lobbies by users\n"
                "- limit (integer, e.g., `limit:10`) -> limit the number of lobbies displayed\n"
-               "Example: `.osu_lobbies country:de,us,fr; public:true; diff:2.1-4.5; player:1-5; limit:10`\n"
+               "Example: `.osu_lobbies country:de,us,fr; public:true; diff:2.1-4.5; playercount:1-5; limit:10`\n"
                "This example would show up to 10 public lobbies that have between 1 and 5 players, a difficulty range that overlaps with 2.1-4.5 stars, and sorts them by how many players belong to the countries Germany, USA, or France.")
         await ctx.send(msg)
 
