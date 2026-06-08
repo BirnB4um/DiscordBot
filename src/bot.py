@@ -778,7 +778,7 @@ async def check_osu_tracker_health():
     if not health:
         
         # dont spam
-        if time_diff > 60 * 30:
+        if time_diff > 60 * 15:
             return
         
         log_error("osumulti tracker is not healthy!")
