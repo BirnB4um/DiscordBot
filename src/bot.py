@@ -774,7 +774,13 @@ async def osu_lobbies(ctx, *filters):
 
 @tasks.loop(minutes=5)
 async def check_osu_tracker_health():
-    if not osumulti.is_healthy():
+    health, time_diff = osumulti.is_healthy()
+    if not health:
+        
+        # dont spam
+        if time_diff > 60 * 30:
+            return
+        
         log_error("osumulti tracker is not healthy!")
         
         user = await bot.fetch_user(user_id["thimo"])

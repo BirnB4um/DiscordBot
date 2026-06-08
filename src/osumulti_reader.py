@@ -186,11 +186,11 @@ class OsuMultiReader():
             return None
         
         
-    def is_healthy(self) -> bool:
+    def is_healthy(self) -> tuple[bool, int]:
         try:
             response = requests.get("http://host.docker.internal:5001/api/osumulti/last_update_time")
             if response.status_code != 200:
-                return False
+                return False, -1
         
             data = response.json()
             
@@ -199,12 +199,12 @@ class OsuMultiReader():
             diff = time.time() - min_last_update_time
             
             if diff > 60 * 5: # 5 minutes
-                return False
+                return False, diff
             
-            return True
+            return True, diff
             
             
         except Exception as e:
             logger.error(f"Error checking OsuMultiReader health: {e}")
             logger.error(traceback.format_exc())
-            return False
+            return False, -1
