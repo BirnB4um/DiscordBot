@@ -812,11 +812,17 @@ async def refresh_osu_players():
         if player_data.get("is_online", False) != old_data.get("is_online", False):
             players_with_status_change.append((player_id, player_data))
             
+    # update latest data
+    osu_latest_player_data = data
+    
     # notify users
     for player_id, player_data in players_with_status_change:
         is_online = player_data.get("is_online", False)
         username = player_data.get("username", "unknown")
-        status = "online" if is_online else "offline"
+        
+        # skip notification if player is offline
+        if not is_online:
+            continue
         
         # find users tracking this player
         for user_id, tracked_players in osu_multi_players.items():
@@ -824,14 +830,12 @@ async def refresh_osu_players():
                 user = await bot.fetch_user(int(user_id))
                 if user:
                     try:
-                        await user.send(f"{'🟩' if is_online else '🟥'} {username} is now {status}!")
+                        await user.send(f"🟩 {username} is now online!")
                     except Exception as e:
                         log_error(f"failed to send DM to user {user_id} about player {player_id} status change. Error: {e}")
                 else:
                     log_error(f"failed to find user object for user id {user_id} when trying to send DM about player {player_id} status change.")
     
-    # update latest data
-    osu_latest_player_data = data
     
 
 def update_target_players():
