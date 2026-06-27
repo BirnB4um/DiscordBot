@@ -175,6 +175,7 @@ def get_cpu_temp():
 @bot.event
 async def on_ready():
     bot.add_view(OsuMultiView())
+    bot.add_view(OsuPlayersView())
     
     log("Bot is ready!")
     user = await bot.fetch_user(user_id["thimo"])
@@ -695,7 +696,6 @@ async def imgFromURL(ctx, url=""):
 
 
 
-
 class OsuMultiView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None) # timeout=None means the buttons won't expire
@@ -723,6 +723,44 @@ class OsuMultiView(discord.ui.View):
         emb = discord.Embed(title=search_filters_str, description=final_text_post, color=0xf668a7)
         # await interaction.message.edit(content=final_text_post)
         await interaction.message.edit(content=None, embed=emb)
+
+
+class OsuPlayersView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None) # timeout=None means the buttons won't expire
+
+    @discord.ui.button(label="Refresh", style=discord.ButtonStyle.blurple, custom_id="refresh_players_btn")
+    async def click_me(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.defer(ephemeral=True)
+        # author_id = interaction.message.embeds[0].title if interaction.message.embeds else "<BAD_ID>"
+        author_id = interaction.message.content
+        
+        msg = OsuPlayersView.create_status_message(author_id)
+        
+        emb = discord.Embed(title="Osu Player Tracking", description=msg, color=0xf668a7)
+        await interaction.message.edit(content=author_id, embed=emb)
+        
+        
+    @staticmethod
+    def create_status_message(user_id):
+        player_ids = osu_multi_players.get(user_id, [])
+        
+        msg = ""
+        if not player_ids:
+            msg += "You are currently not tracking any players. Use `.osu_players add 12345678` to add players to your tracking list.\n"
+            return msg
+        
+        for player_id in player_ids:
+            player_data = osu_latest_player_data.get(player_id, {})
+            if not player_data:
+                msg += f"⬛ <NO_NAME> [{player_id}]\n"
+            else:
+                username = player_data.get("username", "unknown")
+                is_online = player_data.get("is_online", False)
+                msg += f"{'🟩' if is_online else '🟥'} {username} [{player_id}]\n"
+        
+        return msg
+        
 
 
 # Test Payload Command
@@ -868,24 +906,9 @@ async def osu_players(ctx, *commands):
     
     # player menu
     if len(commands) == 0:
-        player_ids = osu_multi_players.get(user_id, [])
-        
-        msg = "**Osu Player Tracking**\n"
-        if not player_ids:
-            msg += "You are currently not tracking any players. Use `.osu_players add 12345678` to add players to your tracking list.\n"
-            await ctx.send(msg)
-            return
-        
-        for player_id in player_ids:
-            player_data = osu_latest_player_data.get(player_id, {})
-            if not player_data:
-                msg += f"⬛ <NO_NAME> [{player_id}]\n"
-            else:
-                username = player_data.get("username", "unknown")
-                is_online = player_data.get("is_online", False)
-                msg += f"{'🟩' if is_online else '🟥'} {username} [{player_id}]\n"
-        
-        await ctx.send(msg)
+        msg = OsuPlayersView.create_status_message(user_id)
+        emb = discord.Embed(title="Osu Player Tracking", description=msg, color=0xf668a7)
+        await ctx.send(content=user_id, embed=emb, view=OsuPlayersView())
         return
     
     
