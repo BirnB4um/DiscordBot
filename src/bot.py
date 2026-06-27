@@ -208,6 +208,10 @@ async def on_message(message):
     
     if message.author.bot:
         return
+        
+    # ignore messages with no content
+    if len(message.content) == 0:
+        return
     
     is_command = message.content[0] == "."
 
