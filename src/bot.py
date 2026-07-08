@@ -203,7 +203,7 @@ async def on_voice_state_update(member, before, after):
 async def on_message(message):
     global standby_mode
     
-    if (message.author == bot.user):
+    if (message.author.id == bot.user.id):
         return
     
     if message.author.bot:
@@ -289,7 +289,7 @@ async def on_message_delete(message):
 async def on_reaction_add(reaction, user):
     # log(f" >> {user.name} added reaction:{reaction.message.content},{reaction.count},{reaction.emoji}")
 
-    if reaction.message.author != bot.user:
+    if reaction.message.author.id != bot.user.id:
         return
     
     if isinstance(reaction.emoji, discord.Emoji):
