@@ -739,9 +739,9 @@ class OsuPlayersView(discord.ui.View):
         # author_id = interaction.message.embeds[0].title if interaction.message.embeds else "<BAD_ID>"
         author_id = interaction.message.content
         
-        msg = OsuPlayersView.create_status_message(author_id)
+        title, msg = OsuPlayersView.create_status_message(author_id)
         
-        emb = discord.Embed(title="Osu Player Tracking", description=msg, color=0xf668a7)
+        emb = discord.Embed(title=title, description=msg, color=0xf668a7)
         await interaction.message.edit(content=author_id, embed=emb)
         
         
@@ -749,10 +749,12 @@ class OsuPlayersView(discord.ui.View):
     def create_status_message(user_id):
         player_ids = osu_multi_players.get(user_id, [])
         
+        timestamp = datetime.now().strftime("%d.%m %H:%M")
+        title = f"Osu Player Tracking ({timestamp})"
         msg = ""
         if not player_ids:
             msg += "You are currently not tracking any players. Use `.osu_players add 12345678` to add players to your tracking list.\n"
-            return msg
+            return title, msg
         
         for player_id in player_ids:
             player_data = osu_latest_player_data.get(player_id, {})
@@ -763,7 +765,7 @@ class OsuPlayersView(discord.ui.View):
                 is_online = player_data.get("is_online", False)
                 msg += f"{'🟩' if is_online else '🟥'} {username} [{player_id}]\n"
         
-        return msg
+        return title, msg
         
 
 
@@ -910,8 +912,8 @@ async def osu_players(ctx, *commands):
     
     # player menu
     if len(commands) == 0:
-        msg = OsuPlayersView.create_status_message(user_id)
-        emb = discord.Embed(title="Osu Player Tracking", description=msg, color=0xf668a7)
+        title, msg = OsuPlayersView.create_status_message(user_id)
+        emb = discord.Embed(title=title, description=msg, color=0xf668a7)
         await ctx.send(content=user_id, embed=emb, view=OsuPlayersView())
         return
     
