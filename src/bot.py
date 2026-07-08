@@ -179,7 +179,7 @@ async def on_ready():
     
     log("Bot is ready!")
     user = await bot.fetch_user(user_id["thimo"])
-    await user.send("Bot Ready!", delete_after=60*60)
+    await user.send("Bot Ready!")
 
     # clear temp folder
     for file in temp_folder.iterdir():
@@ -607,10 +607,10 @@ async def restart(ctx, delay="0"):
     try:
         restart_delay = int(delay)
         restart_delay = constrain(restart_delay, 0, 3600) # max 1 hour delay
-        await ctx.send(f"restarting in {restart_delay} seconds...", delete_after=10)
+        await ctx.send(f"restarting in {restart_delay} seconds...")
     except:
         restart_delay = 0
-        await ctx.send("restarting...", delete_after=10)
+        await ctx.send("restarting...")
     await bot.close()
 
 
